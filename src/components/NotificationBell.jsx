@@ -14,9 +14,17 @@ export default function NotificationBell({ userId }) {
   const isMounted = React.useRef(true);
  
   const fetchNotifications = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.log('fetchNotifications: No userId available');
+      return;
+    }
+    const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('candidateToken') || localStorage.getItem('superAdminToken');
+    if (!token) {
+      console.log('fetchNotifications: No auth token available, skipping request');
+      return;
+    }
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('candidateToken') || localStorage.getItem('superAdminToken');
+      console.log('fetchNotifications: Calling API with userId:', userId);
       const res = await axios.get(`${baseUrl}/notifications/get-notify`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -47,12 +55,12 @@ export default function NotificationBell({ userId }) {
   }, [showDropdown]);
  
   // Close on outside clickx
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showDropdown && buttonRef.current && !buttonRef.current.contains(e.target)) {
-        // Also check if click is inside the dropdown portal
         if (dropdownRef.current && dropdownRef.current.contains(e.target)) {
-          return; // Don't close if clicking inside dropdown
+          return;
         }
         setShowDropdown(false);
       }
@@ -63,6 +71,11 @@ export default function NotificationBell({ userId }) {
  
   const unreadCount = notifications.filter(n => !n.read).length;
  
+  
+  useEffect(() => {
+    console.log('Unread count updated:', unreadCount, 'Total notifications:', notifications.length, 'Notifications:', notifications);
+  }, [unreadCount, notifications]);
+
   const getToken = () => localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('candidateToken') || localStorage.getItem('superAdminToken');
  
  const markAllAsRead = async () => {

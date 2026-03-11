@@ -7,6 +7,9 @@ import {
   X,
   LogOut
 } from 'lucide-react';
+import sublogo from '../../assets/sublogo.png'; 
+
+
 
 const CandidateAdminSidebar = ({ isOpen, onToggle }) => {
   const navigate = useNavigate();
@@ -48,7 +51,7 @@ const CandidateAdminSidebar = ({ isOpen, onToggle }) => {
           onClick={() => handleNavClick(name, path)}
           className={`
             relative flex w-full items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 font-medium
-            ${isActive ? 'bg-white text-[#8b21de] shadow-sm' : 'text-white hover:bg-white/20'}
+            ${isActive ? 'bg-gradient-to-r  from-[#34226D] to-[#6146B5]  shadow-sm' : 'text-white hover:bg-white/20'}
           `}
         >
           {isActive && (
@@ -73,7 +76,7 @@ const CandidateAdminSidebar = ({ isOpen, onToggle }) => {
 
       <div
         className={`
-          fixed left-0 top-0 h-screen bg-gradient-to-b from-[#9A31BD] to-[#250B52] text-white z-50
+          fixed left-0 top-0 h-screen bg-gradient-to-b from-[#332173] to-[#1A1034] text-white z-50
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 w-64 flex flex-col shadow-xl rounded-xl ml-1 my-1
@@ -81,7 +84,13 @@ const CandidateAdminSidebar = ({ isOpen, onToggle }) => {
       >
         <div className="flex items-center justify-between pb-8 py-4 px-6">
           <div className='w-full text-center'>
-            <h1 className="text-3xl font-bold tracking-wide">RecruterAI</h1>
+            
+            <h1 className="text-3xl font-bold tracking-wide flex items-center justify-center gap-2">
+              <span>
+               <img src={sublogo} alt="Sub Logo" className='h-8 w-8 text-white' />
+               </span>
+            RecruterAI
+            </h1>
           </div>
           <button
             onClick={onToggle}

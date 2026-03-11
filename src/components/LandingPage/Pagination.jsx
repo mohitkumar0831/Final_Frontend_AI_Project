@@ -58,8 +58,8 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
           className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all
             ${
               currentPage === page
-                ? "bg-purple-600 text-white border-purple-600"
-                : "border-purple-400 text-purple-600 hover:bg-purple-50"
+                ? "bg-[#654CB7] text-white border-[#654CB7]"
+                : "border-[#654CB7] text-[#654CB7] hover:bg-[#654CB7]/20"
             }`}
         >
           {page}

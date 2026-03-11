@@ -1,0 +1,198 @@
+{
+  "info": {
+    "name": "Recruiter AI - Candidate APIs",
+    "description": "API Collection for Candidate Module - Open Positions, Applied Jobs, and Evaluation Summary",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Open Positions",
+      "item": [
+        {
+          "name": "Get All Available JDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{candidateToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jd/all-jd",
+              "host": ["{{baseUrl}}"],
+              "path": ["jd", "all-jd"]
+            },
+            "description": "Fetches all available job descriptions that candidates can apply to"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Applied Jobs (for filtering)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{candidateToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/candidate/applied-jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["candidate", "applied-jobs"]
+            },
+            "description": "Gets list of job IDs that the candidate has already applied to (used to filter them out from open positions)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Applied Jobs",
+      "item": [
+        {
+          "name": "Get Applied JDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{candidateToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/candidate/applied-jds",
+              "host": ["{{baseUrl}}"],
+              "path": ["candidate", "applied-jds"]
+            },
+            "description": "Fetches all jobs that the logged-in candidate has applied to, including application status (accepted/pending/rejected)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Evaluation Summary",
+      "item": [
+        {
+          "name": "Get All Test Attempts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{pythonUrl}}/v1/test/attempts",
+              "host": ["{{pythonUrl}}"],
+              "path": ["v1", "test", "attempts"]
+            },
+            "description": "Fetches all test attempts from the Python assessment backend"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Candidate Details by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{candidateToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/candidate/public/:candidateId",
+              "host": ["{{baseUrl}}"],
+              "path": ["candidate", "public", ":candidateId"],
+              "variable": [
+                {
+                  "key": "candidateId",
+                  "value": "65f123abc456",
+                  "description": "Replace with actual candidate ID"
+                }
+              ]
+            },
+            "description": "Gets candidate name and email by candidate ID (used to enrich test attempt data)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Finalized Tests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{pythonUrl}}/v1/finalise/finalized-tests",
+              "host": ["{{pythonUrl}}"],
+              "path": ["v1", "finalise", "finalized-tests"]
+            },
+            "description": "Gets all finalized test configurations with titles and job details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Question Set Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{pythonUrl}}/v1/question-set/:questionSetId/questions",
+              "host": ["{{pythonUrl}}"],
+              "path": ["v1", "question-set", ":questionSetId", "questions"],
+              "variable": [
+                {
+                  "key": "questionSetId",
+                  "value": "qset789",
+                  "description": "Replace with actual question set ID"
+                }
+              ]
+            },
+            "description": "Gets metadata for a specific question set including role title and company"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Test Attempt",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{pythonUrl}}/v1/test/attempts/:attemptId",
+              "host": ["{{pythonUrl}}"],
+              "path": ["v1", "test", "attempts", ":attemptId"],
+              "variable": [
+                {
+                  "key": "attemptId",
+                  "value": "attempt123",
+                  "description": "Replace with actual attempt ID to delete"
+                }
+              ]
+            },
+            "description": "Deletes a specific test attempt (cannot be undone)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api",
+      "type": "string"
+    },
+    {
+      "key": "pythonUrl",
+      "value": "https://recruterai.netfotech.in/ai",
+      "type": "string"
+    },
+    {
+      "key": "candidateToken",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    }
+  ]
+}

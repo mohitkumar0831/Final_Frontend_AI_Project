@@ -42,71 +42,18 @@ const ApplyToJob = () => {
             try {
                 setLoading(true);
 
-                const allJDsResponse = await axios.get(`${baseUrl}/jd/all-jd`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('candidateToken')}`,
-                    }
-                });
-
-                if (allJDsResponse.data.success && allJDsResponse.data.data) {
-                    const matchedJob = allJDsResponse.data.data.find(item => item._id === jobId);
-
-                    if (matchedJob) {
-                        setSelectedJob({
-                            id: matchedJob._id,
-                            _id: matchedJob._id,
-                            title: matchedJob.offerId?.jobTitle || 'Job Title Not Available',
-                            location: matchedJob.offerId?.location || 'Location Not Specified',
-                            company: matchedJob.companyName || 'Company Not Specified',
-                            primaryLocation: matchedJob.offerId?.location || 'Location Not Specified',
-                            jobSummary: matchedJob.jobSummary || '',
-                            responsibilities: matchedJob.responsibilities || [],
-                            requirements: matchedJob.requirements || [],
-                            benefits: matchedJob.benefits || [],
-                        });
-                    }
-                }
-
-                const info = getCandidateInfo();
-                setFormData({
-                    name: info.name,
-                    email: info.email,
-                    phone: info.phone,
-                    reallocate: false
-                });
-
-                const token = localStorage.getItem('candidateToken');
-                const resumeResponse = await axios.get(`${baseUrl}/candidate/resume`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-
-                if (resumeResponse.data.success && resumeResponse.data.resume) {
-                    setExistingResume(resumeResponse.data.resume);
-                    setShowResumeChoice(true);
-                } else {
-                    setShowApplicationForm(true);
-                }
-            } catch (error) {
-                setShowApplicationForm(true);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        initializePage();
-    }, [jobId]);
-
-    useEffect(() => {
-        const initializePage = async () => {
-            try {
-                setLoading(true);
-
                 let jobData = null;
                 const storedJob = localStorage.getItem("selectedJD");
 
                 if (storedJob) {
-                    jobData = JSON.parse(storedJob);
-                } else {
+                    try {
+                        jobData = JSON.parse(storedJob);
+                    } catch (e) {
+                        console.log("Error parsing stored job:", e);
+                    }
+                }
+
+                if (!jobData) {
                     try {
                         const allJDsResponse = await axios.get(`${baseUrl}/jd/all-jd`, {
                             headers: {
@@ -154,8 +101,6 @@ const ApplyToJob = () => {
                         headers: { Authorization: `Bearer ${token}` },
                     });
 
-                    console.log("Resume Response:", resumeResponse.data); // Debug log
-
                     if (resumeResponse.data.success && resumeResponse.data.resume) {
                         setExistingResume(resumeResponse.data.resume);
                         setShowResumeChoice(true);
@@ -181,10 +126,51 @@ const ApplyToJob = () => {
         initializePage();
     }, [jobId]);
 
-    const handleUseExistingResume = () => {
-        setShowResumeChoice(false);
-        setShowApplicationForm(true);
-        setUseExistingResume(true);
+    const handleUseExistingResume = async () => {
+        if (!formData.name || !formData.email || !formData.phone) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        if (formData.phone.length !== 10) {
+            alert('Please enter a valid 10-digit phone number');
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const token = localStorage.getItem('candidateToken');
+            const submitData = new FormData();
+
+            submitData.append('useExistingResume', 'true');
+            submitData.append('existingResumeUrl', existingResume);
+            submitData.append('name', formData.name);
+            submitData.append('email', formData.email);
+            submitData.append('phone', formData.phone);
+            submitData.append('reallocate', formData.reallocate ? 'yes' : 'no');
+
+            const response = await axios.post(
+                `${baseUrl}/candidate/apply/${jobId}`,
+                submitData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    }
+                }
+            );
+
+            if (response.data.success) {
+                alert('Application submitted successfully!');
+                navigate('/Candidate-Dashboard/AllJDs');
+            } else {
+                alert(response.data.error || 'Application failed.');
+            }
+        } catch (error) {
+            alert(error?.response?.data?.error || 'Application failed.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const handleUploadNewResume = () => {
@@ -287,46 +273,138 @@ const ApplyToJob = () => {
     return (
         <div className="min-h-screen">
             {showResumeChoice && existingResume && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto relative">
-                        <button onClick={handleBack} className="absolute top-3 right-3 text-gray-500 hover:text-black transition">
-                            <X size={22} />
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-3 md:p-4">
+                    <div className="bg-white rounded-xl md:rounded-2xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto relative custom-scrollbar" style={{
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
+                        WebkitOverflowScrolling: 'touch'
+                    }}>
+                        <button onClick={handleBack} className="absolute top-3 right-3 text-gray-500 hover:text-black transition z-10">
+                            <X size={20} />
                         </button>
-                        <div className="p-6 space-y-5">
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">Resume Selection</h2>
-                            <p className="text-gray-700 mb-4">You already have a resume uploaded. Please choose an option:</p>
-                            <div className="flex flex-col gap-4">
-                                <div className="border border-gray-200 rounded-lg p-4 flex flex-col items-center">
-                                    <span className="text-green-700 font-semibold">Use Existing Resume</span>
-                                    <a href={existingResume} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline mt-2">View Resume</a>
-                                    <button className="mt-3 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors font-medium" onClick={handleUseExistingResume}>
-                                        Use This Resume
-                                    </button>
-                                </div>
-                                <div className="border border-gray-200 rounded-lg p-4 flex flex-col items-center">
-                                    <span className="text-blue-700 font-semibold">Upload New Resume</span>
-                                    <button className="mt-3 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors font-medium" onClick={handleUploadNewResume}>
-                                        Upload New Resume
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <div className="p-5 md:p-6 bg-white max-w-8xl mx-auto">
+  {/* Resume Selection Card */}
+  <div className="mb-6">
+    <label className="block text-sm font-medium text-gray-900 mb-2">
+      Resume <span className="text-red-500">*</span>
+    </label>
+    
+    <div className="border border-gray-100 rounded-2xl p-8 flex flex-col items-center justify-center bg-white shadow-sm ring-1 ring-gray-200/50">
+      <h3 className="text-lg font-semibold text-gray-700 mb-3">Using Existing Resume</h3>
+      
+      <a 
+        href={existingResume} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-indigo-600 underline text-lg font-medium mb-6 hover:text-indigo-800 transition-colors"
+      >
+        View Resume
+      </a>
+
+      <button 
+        onClick={handleUploadNewResume}
+        className="px-8 py-2.5 border-2 border-indigo-600 text-indigo-600 rounded-xl font-semibold hover:bg-indigo-50 transition-all"
+      >
+        Upload New
+      </button>
+    </div>
+  </div>
+
+  {/* Form Fields */}
+  <div className="space-y-4 md:space-y-6">
+    <div>
+      <label className="block text-sm font-medium text-gray-900 mb-2">
+        Full Name <span className="text-red-500">*</span>
+      </label>
+      <input 
+        type="text"
+        name="name"
+        value={formData.name}
+        readOnly
+        className="w-full px-3 md:px-4 py-3 md:py-4 bg-gray-50 border border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm md:text-base"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-900 mb-2">
+        Email <span className="text-red-500">*</span>
+      </label>
+      <input 
+        type="email"
+        name="email"
+        value={formData.email}
+        readOnly
+        className="w-full px-3 md:px-4 py-3 md:py-4 bg-gray-50 border border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm md:text-base"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-900 mb-2">
+        Phone No. <span className="text-red-500">*</span>
+      </label>
+      <input 
+        type="tel"
+        name="phone"
+        value={formData.phone}
+        onChange={handleInputChange}
+        maxLength={10}
+        placeholder="Enter 10-digit phone number"
+        className="w-full px-3 md:px-4 py-3 md:py-4 bg-gray-50 border border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm md:text-base"
+        required
+      />
+      {formData.phone && formData.phone.length !== 10 && (
+        <p className="text-xs text-red-500 mt-1">Phone number must be 10 digits</p>
+      )}
+    </div>
+
+    <div className="flex items-center gap-3 py-2">
+      <input 
+        type="checkbox" 
+        id="relocate" 
+        name="reallocate"
+        checked={formData.reallocate}
+        onChange={handleInputChange}
+        className="w-5 h-5 md:w-6 md:h-6 rounded-md border-gray-300 text-indigo-600 focus:ring-indigo-500" 
+      />
+      <label htmlFor="relocate" className="text-sm md:text-base text-gray-500 font-medium">
+        I am willing to relocate.
+      </label>
+    </div>
+
+    {/* Submit Button */}
+    <button 
+      onClick={handleUseExistingResume}
+      disabled={submitting || !formData.phone || formData.phone.length !== 10}
+      className="w-full py-3 md:py-4 bg-[#9D93EF] hover:bg-[#8A7EE0] text-white font-bold text-base md:text-lg rounded-lg md:rounded-xl transition-colors shadow-md min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {submitting ? 'Submitting...' : 'Submit Application'}
+    </button>
+  </div>
+</div>
                     </div>
                 </div>
             )}
 
             {showApplicationForm && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
-                        <button className="absolute top-3 right-4 text-gray-500 hover:text-black text-xl" onClick={handleBack} disabled={submitting}>
-                            <X size={22} />
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-3 md:p-4">
+                    <div className="bg-white rounded-xl shadow-lg w-full max-w-xl md:max-w-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar" style={{
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
+                        WebkitOverflowScrolling: 'touch'
+                    }}>
+                        <button className="absolute top-3 right-3 md:right-4 text-gray-500 hover:text-black text-xl z-10" onClick={handleBack} disabled={submitting}>
+                            <X size={20} />
                         </button>
-                        <div className="p-6">
+                        <div className="p-5 md:p-6">
                             <div className="mb-4">
-                                <h2 className="text-xl font-semibold text-gray-900">Apply for {selectedJob.title}</h2>
-                                <div className="flex items-center gap-1 text-red-500 mt-1">
-                                    <MapPin size={16} />
-                                    <span>{selectedJob.primaryLocation || selectedJob.location}</span>
+                                <h2 className="text-lg md:text-xl font-semibold text-gray-900">Apply for {selectedJob.title}</h2>
+                                <div className="flex items-center gap-1 text-gray-600 mt-1 text-sm">
+                                    <MapPin size={14} />
+                                    <span>
+                                        {Array.isArray(selectedJob.location) 
+                                            ? selectedJob.location.join(', ') 
+                                            : (selectedJob.primaryLocation || selectedJob.location || 'Not Specified')}
+                                    </span>
                                 </div>
                             </div>
 
@@ -336,14 +414,14 @@ const ApplyToJob = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Resume<span className="text-red-500">*</span>
                                         </label>
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center">
-                                            <Upload size={28} className="text-gray-400 mb-2" />
-                                            <label htmlFor="resume" className="bg-black text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 text-sm">
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6 flex flex-col items-center justify-center text-center">
+                                            <Upload size={24} className="text-gray-400 mb-2" />
+                                            <label htmlFor="resume" className="bg-black text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-800 text-xs md:text-sm min-h-[44px] flex items-center justify-center">
                                                 Upload a Resume
                                             </label>
                                             <p className="text-xs text-gray-500 mt-2">PDF, DOC, DOCX up to 5MB</p>
                                             <input id="resume" type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
-                                            {resume && <p className="mt-2 text-sm text-green-600">{resume.name}</p>}
+                                            {resume && <p className="mt-2 text-xs md:text-sm text-green-600 font-medium">{resume.name}</p>}
                                         </div>
                                     </div>
                                 ) : (
@@ -374,7 +452,20 @@ const ApplyToJob = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Phone<span className="text-red-500">*</span>
                                     </label>
-                                    <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Enter your phone number" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-black focus:outline-none" required maxLength={10} />
+                                    <input 
+                                        type="tel" 
+                                        name="phone" 
+                                        value={formData.phone} 
+                                        onChange={handleInputChange} 
+                                        placeholder="Enter your phone number" 
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-black focus:outline-none" 
+                                        required 
+                                        maxLength={10}
+                                        pattern="[0-9]{10}"
+                                    />
+                                    {formData.phone && formData.phone.length !== 10 && (
+                                        <p className="text-xs text-red-500 mt-1">Phone number must be 10 digits</p>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -384,7 +475,7 @@ const ApplyToJob = () => {
                                     </label>
                                 </div>
 
-                                <button type="submit" disabled={submitting} className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                <button type="submit" disabled={submitting} className="w-full bg-black text-white py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed min-h-[44px]">
                                     {submitting ? 'Submitting...' : 'Submit'}
                                 </button>
                             </form>

@@ -5,6 +5,8 @@ import { baseUrl } from "../../utils/ApiConstants";
 import { useNavigate } from "react-router-dom";
 import NotificationBell from '../../components/NotificationBell';
 
+
+
 const CandidateHeader = ({ onMenuToggle }) => {
     const [user, setUser] = useState(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
