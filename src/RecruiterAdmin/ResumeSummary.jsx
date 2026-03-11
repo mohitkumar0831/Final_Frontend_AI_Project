@@ -18,6 +18,11 @@ export default function ResumeSummary({ onClose, candidate }) {
     const circumference = 2 * Math.PI * 78;
     const dashArray = `${(clamped / 100) * circumference} ${circumference}`;
 
+    // Dynamic color for progress based on percentage
+    const progressColor = clamped > 50
+        ? 'url(#progressGreenGradient)'
+        : 'url(#progressRedGradient)';
+
     useEffect(() => {
         const onKeyDown = (e) => e.key === "Escape" && onClose?.();
         window.addEventListener("keydown", onKeyDown);
@@ -99,10 +104,15 @@ export default function ResumeSummary({ onClose, candidate }) {
                                         className="absolute inset-0"
                                     >
                                         <defs>
-                                            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stopColor="#c4b5fd" />
-                                                <stop offset="50%" stopColor="#8b5cf6" />
-                                                <stop offset="100%" stopColor="#4c1d95" />
+                                            <linearGradient id="progressGreenGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stopColor="#bbf7d0" />
+                                                <stop offset="50%" stopColor="#22c55e" />
+                                                <stop offset="100%" stopColor="#166534" />
+                                            </linearGradient>
+                                            <linearGradient id="progressRedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stopColor="#fecaca" />
+                                                <stop offset="50%" stopColor="#ef4444" />
+                                                <stop offset="100%" stopColor="#991b1b" />
                                             </linearGradient>
                                         </defs>
 
@@ -120,16 +130,16 @@ export default function ResumeSummary({ onClose, candidate }) {
                                             cy="88"
                                             r="78"
                                             fill="none"
-                                            stroke="url(#progressGradient)"
+                                            stroke={progressColor}
                                             strokeWidth="12"
                                             strokeLinecap="round"
                                             strokeDasharray={dashArray}
                                             transform="rotate(-90 88 88)"
-                                            style={{ transition: "stroke-dasharray 0.5s ease" }}
+                                            style={{ transition: "stroke-dasharray 0.5s ease, stroke 0.5s" }}
                                         />
                                     </svg>
 
-                                    <span className="relative text-2xl font-semibold text-[#7365e1]">
+                                    <span className="relative text-2xl font-semibold text-[#166534]">
                                         {clamped}%
                                     </span>
                                 </div>

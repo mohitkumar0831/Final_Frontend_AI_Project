@@ -430,7 +430,7 @@ function JDDetails() {
   const ScoreBadge = ({ score }) => {
     const s = Number(score || 0);
     const deg = Math.max(0, Math.min(100, s)) * 3.6;
-    const color = s >= 70 ? "#16a34a" : s >= 40 ? "#f59e0b" : "#ef4444";
+    const color = s >= 50 ? "#166534" : s >= 40 ? "#f59e0b" : "#ef4444";
 
     return (
       <div className="flex items-center gap-2">
