@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import axios from 'axios';
 import { superAdminBaseUrl } from '../utils/ApiConstants';
-const RecruiterProfile = () => {
+const SuperAdminProfile = () => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -150,4 +150,4 @@ const RecruiterProfile = () => {
     );
 };
 
-export default RecruiterProfile;
+export default SuperAdminProfile;

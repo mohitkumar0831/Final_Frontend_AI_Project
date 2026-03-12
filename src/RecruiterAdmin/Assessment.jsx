@@ -343,7 +343,7 @@ function Assessment() {
                                 `/RecruiterAdmin-Dashboard/Assessment/QuestionsList/${id}`
                               )
                             }
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                            className="flex h-8 w-8 items-center justify-center  rounded-lg bg-[#F2EEFF] text-[#5B4CCB] transition"
                             title="View"
                             aria-label="View"
                           >

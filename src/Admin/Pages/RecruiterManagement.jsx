@@ -40,17 +40,17 @@ function RecruiterManagement() {
             registerId: recruiter.registerId || "NA",
             registerDate: recruiter.createdAt
               ? new Date(recruiter.createdAt).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
               : "NA",
             lastLogin: recruiter.lastLogin
               ? new Date(recruiter.lastLogin).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
               : "NA",
             associates: recruiter.associates || [],
             role: recruiter.role || "HR",
@@ -176,12 +176,12 @@ function RecruiterManagement() {
       const updatedRecruiters = recruiters.map((r) =>
         r.id === editingRecruiter.id
           ? {
-              ...r,
-              name: responseData.name || responseData.fullName,
-              email: responseData.email,
-              phone: responseData.phone,
-              company: responseData.company || r.company,
-            }
+            ...r,
+            name: responseData.name || responseData.fullName,
+            email: responseData.email,
+            phone: responseData.phone,
+            company: responseData.company || r.company,
+          }
           : r
       );
 
@@ -264,9 +264,8 @@ function RecruiterManagement() {
             month: "short",
             year: "numeric",
           }),
-          action: `HR ${recruiter.name} ${
-            updatedStatus === "Active" ? "Activated" : "Deactivated"
-          }`,
+          action: `HR ${recruiter.name} ${updatedStatus === "Active" ? "Activated" : "Deactivated"
+            }`,
           by: "Admin",
           timestamp: Date.now(),
         };
@@ -323,7 +322,7 @@ function RecruiterManagement() {
                 setEditingRecruiter(null);
                 setShowAddForm(true);
               }}
-              className="h-10 px-4 rounded-md bg-[#6D5DD3] text-white font-medium hover:brightness-95 transition"
+              className="h-10 px-4 rounded-md bg-gradient-to-r from-[#6E54C3] to-[#AEB0FF] text-white font-medium hover:brightness-95 transition"
             >
               Add New
             </button>
@@ -356,11 +355,10 @@ function RecruiterManagement() {
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium ${
-                            recruiter.status === "Active"
-                              ? "bg-green-50 text-green-600"
-                              : "bg-red-50 text-red-600"
-                          }`}
+                          className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium ${recruiter.status === "Active"
+                            ? "bg-green-50 text-green-600"
+                            : "bg-red-50 text-red-600"
+                            }`}
                         >
                           {recruiter.status === "Active" ? "Active" : "In-Active"}
                         </span>
@@ -369,18 +367,17 @@ function RecruiterManagement() {
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => handleViewDetails(recruiter)}
-                            className="w-8 h-8 rounded-full border border-[#6D5DD3]/40 text-[#6D5DD3] grid place-items-center hover:bg-[#6D5DD3]/5 transition"
+                            className="w-8 h-8 rounded-lg bg-[#F6F6FF] hover:bg-[#EDE9FF] transition flex items-center justify-center"
                             title="View"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-4 h-4 text-[#5B34F1]" />
                           </button>
 
                           <button
                             onClick={() => handleDelete(recruiter.id)}
-                            className="w-8 h-8 rounded-full border border-red-400/60 text-red-500 grid place-items-center hover:bg-red-50 transition"
-                            title="Delete"
+                            className="w-8 h-8 rounded-lg bg-[#FFF6F6] hover:bg-[#FFE4E6] transition flex items-center justify-center"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 text-red-500" />
                           </button>
                         </div>
                       </td>
@@ -403,11 +400,10 @@ function RecruiterManagement() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`w-8 h-8 rounded-md border grid place-items-center transition ${
-                    currentPage === 1
-                      ? "border-gray-200 text-gray-300"
-                      : "border-[#6D5DD3]/50 text-[#6D5DD3] hover:bg-[#6D5DD3]/5"
-                  }`}
+                  className={`w-8 h-8 rounded-md border grid place-items-center transition ${currentPage === 1
+                    ? "border-gray-200 text-gray-300"
+                    : "border-[#6D5DD3]/50 text-[#6D5DD3] hover:bg-[#6D5DD3]/5"
+                    }`}
                 >
                   ‹
                 </button>
@@ -419,11 +415,10 @@ function RecruiterManagement() {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`w-8 h-8 rounded-md border text-sm font-medium transition ${
-                        active
-                          ? "bg-[#6D5DD3] border-[#6D5DD3] text-white"
-                          : "bg-white border-[#6D5DD3]/40 text-[#6D5DD3] hover:bg-[#6D5DD3]/5"
-                      }`}
+                      className={`w-8 h-8 rounded-md border text-sm font-medium transition ${active
+                        ? "bg-[#6D5DD3] border-[#6D5DD3] text-white"
+                        : "bg-white border-[#6D5DD3]/40 text-[#6D5DD3] hover:bg-[#6D5DD3]/5"
+                        }`}
                     >
                       {page}
                     </button>
@@ -433,11 +428,10 @@ function RecruiterManagement() {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`w-8 h-8 rounded-md border grid place-items-center transition ${
-                    currentPage === totalPages
-                      ? "border-gray-200 text-gray-300"
-                      : "border-[#6D5DD3]/50 text-[#6D5DD3] hover:bg-[#6D5DD3]/5"
-                  }`}
+                  className={`w-8 h-8 rounded-md border grid place-items-center transition ${currentPage === totalPages
+                    ? "border-gray-200 text-gray-300"
+                    : "border-[#6D5DD3]/50 text-[#6D5DD3] hover:bg-[#6D5DD3]/5"
+                    }`}
                 >
                   ›
                 </button>
@@ -524,11 +518,10 @@ function RecruiterManagement() {
                     setSelectedActionRecruiter(selectedRecruiter);
                     setShowConfirmPopup(true);
                   }}
-                  className={`flex-1 h-12 rounded-xl border font-medium transition ${
-                    selectedRecruiter.status === "Active"
-                      ? "border-red-500 text-red-500 hover:bg-red-50"
-                      : "border-green-600 text-green-600 hover:bg-green-50"
-                  }`}
+                  className={`flex-1 h-10 rounded-xl border font-medium transition ${selectedRecruiter.status === "Active"
+                    ? "border-red-500 text-red-500 hover:bg-red-50"
+                    : "border-green-600 text-green-600 hover:bg-green-50"
+                    }`}
                 >
                   {selectedRecruiter.status === "Active" ? "Deactivate" : "Activate"}
                 </button>
@@ -538,7 +531,7 @@ function RecruiterManagement() {
                     setShowDetailsModal(false);
                     handleEditHR(selectedRecruiter);
                   }}
-                  className="flex-1 h-12 rounded-xl bg-[#6D5DD3] text-white font-medium hover:brightness-95 transition"
+                  className="flex-[2] h-10 rounded-xl bg-gradient-to-r from-[#7058C5] to-[#A9A9FB] text-white font-medium hover:brightness-95 transition"
                 >
                   Edit HR
                 </button>
@@ -552,9 +545,8 @@ function RecruiterManagement() {
         <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[380px] text-center border border-gray-200">
             <div
-              className={`mx-auto mb-3 w-12 h-12 flex items-center justify-center rounded-full ${
-                selectedActionRecruiter?.status === "Active" ? "bg-red-100" : "bg-green-100"
-              }`}
+              className={`mx-auto mb-3 w-12 h-12 flex items-center justify-center rounded-full ${selectedActionRecruiter?.status === "Active" ? "bg-red-100" : "bg-green-100"
+                }`}
             >
               {selectedActionRecruiter?.status === "Active" ? "⚠️" : "✅"}
             </div>
@@ -591,11 +583,10 @@ function RecruiterManagement() {
 
               <button
                 onClick={confirmToggleStatus}
-                className={`px-4 py-2 rounded-lg text-white font-medium transition ${
-                  selectedActionRecruiter?.status === "Active"
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-green-500 hover:bg-green-600"
-                }`}
+                className={`px-4 py-2 rounded-lg text-white font-medium transition ${selectedActionRecruiter?.status === "Active"
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-green-500 hover:bg-green-600"
+                  }`}
               >
                 {selectedActionRecruiter?.status === "Active" ? "Deactivate" : "Activate"}
               </button>

@@ -223,7 +223,7 @@ export default function AssignedRecruiters() {
 
                           <button
                             onClick={() => handleDelete(job.id)}
-                            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent text-red-600 hover:bg-red-50 transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-transparent text-red-600 bg-red-50 transition-colors"
                             title="Delete"
                             aria-label="Delete"
                           >

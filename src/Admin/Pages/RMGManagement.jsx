@@ -372,13 +372,13 @@ function RMGManagement() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleViewDetails(recruiter)}
-                            className="w-8 h-8 rounded-lg bg-[#F4F2FF] hover:bg-[#EDE9FF] transition flex items-center justify-center"
+                            className="w-8 h-8 rounded-lg bg-[#F6F6FF] hover:bg-[#EDE9FF] transition flex items-center justify-center"
                           >
                             <Eye className="w-4 h-4 text-[#5B34F1]" />
                           </button>
                           <button
                             onClick={() => handleDelete(recruiter.id)}
-                            className="w-8 h-8 rounded-lg bg-[#FFF1F2] hover:bg-[#FFE4E6] transition flex items-center justify-center"
+                            className="w-8 h-8 rounded-lg bg-[#FFF6F6] hover:bg-[#FFE4E6] transition flex items-center justify-center"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </button>

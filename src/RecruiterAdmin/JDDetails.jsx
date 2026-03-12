@@ -651,7 +651,7 @@ function JDDetails() {
                         <td className="py-4 px-4">
                           <button
                             onClick={() => handleViewCandidate(candidate)}
-                            className="w-9 h-9 rounded-full border border-[#D7D2FF] bg-white hover:bg-[#F3F1FF] flex items-center justify-center"
+                            className="w-9 h-9 rounded-lg bg-[#F3F1FF] flex items-center justify-center"
                           >
                             <Eye size={16} className="text-[#5B4BFF]" />
                           </button>

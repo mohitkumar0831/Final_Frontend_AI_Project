@@ -29,7 +29,7 @@ export default function NonCandidateList() {
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
                 });
-                console.log(res.data);
+                console.log("hiii", res.data);
 
                 if (res.data?.success && res.data?.data) {
                     setCandidates(res.data.data);
@@ -219,7 +219,7 @@ export default function NonCandidateList() {
                             <button
                                 onClick={handleClear}
                                 disabled={sendingInvites && selectedIds.size > 0}
-                                className="rounded-lg border border-blue-700 text-blue-900 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-lg border border-[#5B4CCB] text-[#5B4CCB] bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Clear
                             </button>
@@ -371,7 +371,7 @@ export default function NonCandidateList() {
                                                             href={c.resume}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-700 hover:bg-violet-200"
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#F2EEFF] text-[#5B4CCB] transition"
                                                             title="View Resume"
                                                             aria-label="View Resume"
                                                         >

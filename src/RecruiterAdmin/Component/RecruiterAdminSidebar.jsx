@@ -30,8 +30,7 @@ const RecruiterAdminSidebar = ({ isOpen = true }) => {
         const res = await axios.get(`${baseUrl}/auth/meAll`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log(res.data);
-
+        // console.log(res.data);
         setUserData(res.data.data);
       } catch (err) {
         console.error("Error fetching user:", err);
@@ -113,6 +112,15 @@ const RecruiterAdminSidebar = ({ isOpen = true }) => {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [isProfileMenuOpen]);
+
+  // Initials function
+  const getInitials = (name) => {
+    if (!name) return '';
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] || '';
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (first + last).toUpperCase();
+  };
 
   const NavItem = ({ name, path, icon: Icon, label }) => {
     const isActive = activeNav === name;
@@ -284,13 +292,11 @@ const RecruiterAdminSidebar = ({ isOpen = true }) => {
           ].join(" ")}
           onClick={() => setIsProfileMenuOpen((v) => !v)}
         >
-          <img
-            src="https://i.pravatar.cc/80?img=47"
-            alt="profile"
-            className="h-9 w-9 rounded-full ring-2 ring-white/20"
-          />
+          <div className="h-9 w-9 rounded-full ring-2 ring-white/20 bg-[#332173] flex items-center justify-center text-white text-[14px] font-bold uppercase shrink-0">
+            {getInitials(userData?.name)}
+          </div>
           <div className="min-w-0 flex-1 text-left">
-            <div className="text-[12px] font-semibold leading-4 truncate">
+            <div className="text-[12px] font-semibold leading-4 truncate capitalize">
               {userData?.name || "Loading..."}
             </div>
             <div className="text-[10px] text-white/65 leading-4 truncate">

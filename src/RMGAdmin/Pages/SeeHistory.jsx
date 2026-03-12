@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Eye, ChevronDown } from "lucide-react";
+import { Eye, ChevronDown, ArrowUpDown, ChevronsUpDown } from "lucide-react";
 import { useLocation, useParams } from "react-router-dom";
 import Pagination from "../../components/LandingPage/Pagination";
 import FilteredCandidate from "./FilteredCandidate";
 import UnfilteredCandidate from "./UnfilteredCandidate";
+import arrow from "../../img/double-arrow.png"
 
 async function fetchJDHistoryFromApi(jdId) {
     const res = await fetch(`/api/jds/history/${jdId}`, {
@@ -162,20 +163,33 @@ const SeeHistory = () => {
         let mounted = true;
 
         async function load() {
+            console.log("📍 location.state:", location.state);
+
             try {
                 if (location.state?.jdData) {
+                    console.log("✅ Data from location.state:", location.state.jdData);
+                    setJdData(location.state.jdData);
                     setLoading(false);
                     return;
                 }
+
                 const jdId = params.jdId;
                 if (!jdId) {
+                    console.log("❌ No jdId found!");
                     setLoading(false);
                     return;
                 }
+
                 setLoading(true);
+                console.log("📞 Calling API with jdId:", jdId);
+
                 const apiData = await fetchJDHistoryFromApi(jdId);
+                console.log("✅ API Response:", apiData);
+
                 if (mounted) setJdData(apiData);
+
             } catch (e) {
+                console.log("💥 Error:", e);
                 if (mounted) setError(e?.message || "Something went wrong");
             } finally {
                 if (mounted) setLoading(false);
@@ -245,42 +259,40 @@ const SeeHistory = () => {
 
     const filteredCandidates = useMemo(() => {
         return (currentJob?.rawFilteredCandidates || []).map((fc, index) => {
-            const matched = (currentJob?.rawAppliedCandidates || []).find(
-                (ac) => ac._id === fc.candidate || ac.candidateId === fc.candidate
-            );
+            const cand = (typeof fc.candidate === 'object' && fc.candidate !== null)
+                ? fc.candidate
+                : {};
 
             return {
                 id: fc._id || index + 1,
-                name: matched?.name || "N/A",
-                email: matched?.email || "N/A",
-                phone: matched?.phone || "N/A",
+                name: cand.name || "N/A",
+                email: cand.email || "N/A",
+                resume: cand.resume || null,
+                phone: cand.phone || "N/A",
                 skillsArr: currentJob?.skills || [],
                 percentage: fc.aiScore || 0,
                 aiExplanation: fc.aiExplanation || "No explanation available",
-                resume: matched?.resume || null,
-                appliedAt: matched?.appliedAt || null,
-                candidateRefId: fc.candidate || null,
+                candidateRefId: cand._id || fc.candidate || null,
             };
         });
     }, [currentJob]);
 
     const unfilteredCandidates = useMemo(() => {
         return (currentJob?.rawUnfilteredCandidates || []).map((uc, index) => {
-            const matched = (currentJob?.rawAppliedCandidates || []).find(
-                (ac) => ac._id === uc.candidate || ac.candidateId === uc.candidate
-            );
+            const cand = (typeof uc.candidate === 'object' && uc.candidate !== null)
+                ? uc.candidate
+                : {};
 
             return {
                 id: uc._id || index + 1,
-                name: matched?.name || "N/A",
-                email: matched?.email || "N/A",
-                phone: matched?.phone || "N/A",
+                name: cand.name || "N/A",
+                email: cand.email || "N/A",
+                resume: cand.resume || null,
+                phone: cand.phone || "N/A",
                 skillsArr: currentJob?.skills || [],
                 percentage: uc.aiScore || 0,
                 aiExplanation: uc.aiExplanation || "No explanation available",
-                resume: matched?.resume || null,
-                appliedAt: matched?.appliedAt || null,
-                candidateRefId: uc.candidate || null,
+                candidateRefId: cand._id || uc.candidate || null,
             };
         });
     }, [currentJob]);
@@ -353,17 +365,17 @@ const SeeHistory = () => {
             )}
 
             <div className="flex items-center justify-between gap-3">
-                <div className="text-gray-900 font-semibold">
+                <div className="text-gray-900 font-bold">
                     Job Title: <span className="font-bold">{currentJob?.title}</span>
                 </div>
 
-                <button className="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700">
+                <button className="px-4 py-2 rounded-md bg-gradient-to-r from-[#7058C5] to-[#A9A9FB] text-white text-sm font-semibold hover:bg-indigo-700">
                     View Job Description
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2 bg-white rounded-2xl p-5 shadow-[0px_0px_6px_0px_rgba(0,_0,_0,_0.12)]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="bg-white rounded-2xl p-5 shadow-[0px_0px_6px_0px_rgba(0,_0,_0,_0.12)]">
                     <div className="font-bold text-gray-900">Job Summary</div>
                     <p className="text-gray-600 text-sm mt-3 leading-relaxed max-h-36 overflow-auto pr-1">
                         {currentJob?.notes}
@@ -440,38 +452,38 @@ const SeeHistory = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[980px] text-left border rounded-2xl border-purple-300">
+                <div className="overflow-x-auto border border-purple-300 rounded-lg">
+                    <table className="w-full min-w-[980px] text-left">
                         <thead>
                             <tr className="text-xs font-semibold text-gray-500 bg-indigo-50/40">
                                 <th className="py-4 px-5">
                                     <div className="inline-flex items-center gap-1">
-                                        Serial No. <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                        Serial No.
                                     </div>
                                 </th>
                                 <th className="py-4 px-5">
                                     <div className="inline-flex items-center gap-1">
-                                        Job Title <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                        Job Title <img src={arrow} alt="" />
                                     </div>
                                 </th>
                                 <th className="py-4 px-5">
                                     <div className="inline-flex items-center gap-1">
-                                        Name <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                        Name
                                     </div>
                                 </th>
                                 <th className="py-4 px-5">
                                     <div className="inline-flex items-center gap-1">
-                                        Email <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                        Email
                                     </div>
                                 </th>
                                 <th className="py-4 px-5">
                                     <div className="inline-flex items-center gap-1">
-                                        Skills <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                        Skills <img src={arrow} alt="" />
                                     </div>
                                 </th>
                                 <th className="py-4 px-5 text-right">
                                     <div className="inline-flex items-center gap-1 justify-end w-full">
-                                        FitBit Score <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                        FitBit Score <img src={arrow} alt="" />
                                     </div>
                                 </th>
                                 <th className="py-4 px-5 text-center">Action</th>
@@ -508,7 +520,7 @@ const SeeHistory = () => {
                                                 <div className="flex items-center justify-center">
                                                     <button
                                                         onClick={() => handleFilteredEyeClick(c)}
-                                                        className="w-8 h-8 inline-flex items-center justify-center rounded-full border border-indigo-200 hover:bg-indigo-50"
+                                                        className="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-[#F6F6FF] hover:bg-indigo-50"
                                                         title="View"
                                                     >
                                                         <Eye className="w-4 h-4 text-indigo-700" />
@@ -552,7 +564,7 @@ const SeeHistory = () => {
                                             <div className="flex items-center justify-center">
                                                 <button
                                                     onClick={() => handleUnfilteredEyeClick(c)}
-                                                    className="w-8 h-8 inline-flex items-center justify-center rounded-full border border-indigo-200 hover:bg-indigo-50"
+                                                    className="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-[#F6F6FF] hover:bg-indigo-50"
                                                     title="View"
                                                 >
                                                     <Eye className="w-4 h-4 text-indigo-700" />

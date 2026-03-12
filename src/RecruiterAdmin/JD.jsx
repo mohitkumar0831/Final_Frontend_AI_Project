@@ -248,7 +248,7 @@ function JD() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // console.log("jd page data", response.data);
+      console.log("jd page data", response.data);
 
 
       if (response.data.success && response.data.data) {
@@ -316,6 +316,7 @@ function JD() {
       const response = await axios.get(`${baseUrl}/jd/assigned-offers/hr`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+// console.log("incoming jds", response.data);
 
       if (response.data.success) {
         const filteredData = response.data.data
@@ -332,7 +333,13 @@ function JD() {
 
   const handleSelectJD = (jd) => {
     navigate("/RecruiterAdmin-Dashboard/JD/CreateJD", {
-      state: { offerId: jd._id, companyName: jd.companyName },
+      state: {
+        offerId: jd._id,
+        companyName: jd.companyName,
+        location: jd.location,
+        dueDate: jd.dueDate,
+        employmentType: jd.employmentType,
+      },
     });
   };
 
@@ -774,7 +781,7 @@ function JD() {
                               <div className="flex items-center gap-3">
                                 <button
                                   onClick={() => handleShowSummary(row)}
-                                  className="h-7 w-7 grid place-items-center rounded-lg border border-[#D8C7FF] text-[#5B4CCB] hover:bg-[#F2EEFF] transition"
+                                  className="h-7 w-7 grid place-items-center rounded-lg bg-[#F2EEFF] text-[#5B4CCB] transition"
                                   aria-label="View JD Summary"
                                 >
                                   <Eye className="h-4 w-4" />
@@ -785,7 +792,7 @@ function JD() {
                                     navigate("/RecruiterAdmin-Dashboard/NonCandidateList", { state: { jdId: row._id } })
                                   }
                                   title="Send Invite"
-                                  className="h-7 w-7 grid place-items-center rounded-lg border border-[#D8C7FF] text-[#5B4CCB] hover:bg-[#F2EEFF] transition"
+                                  className="h-7 w-7 grid place-items-center rounded-lg bg-[#F2EEFF] text-[#5B4CCB] transition"
                                   aria-label="Send Invite"
                                 >
                                   <Share2 className="h-4 w-4" />
@@ -793,7 +800,7 @@ function JD() {
 
                                 <button
                                   onClick={() => handleViewJD(row)}
-                                  className="h-7 w-7 grid place-items-center rounded-lg border border-[#D8C7FF] text-[#5B4CCB] hover:bg-[#F2EEFF] transition"
+                                  className="h-7 w-7 grid place-items-center rounded-lg bg-[#F2EEFF] text-[#5B4CCB] transition"
                                   aria-label="View JD"
                                 >
                                   <ChevronRight className="h-4 w-4" />

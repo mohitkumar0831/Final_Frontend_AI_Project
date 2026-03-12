@@ -288,9 +288,10 @@ const RMGRaiseTickets = () => {
                                                 <div className="flex items-center justify-center">
                                                     <button
                                                         onClick={() => openDetails(t)}
-                                                        className="h-9 w-9 rounded-full border border-purple-300 text-purple-600 hover:bg-purple-50"
+                                                        className="h-7 w-7 grid place-items-center rounded-lg bg-[#F6F6FF] text-[#5B4CCB] hover:bg-[#F2EEFF] transition"
+                                                        aria-label="View JD Summary"
                                                     >
-                                                        <Eye className="w-4 h-4 mx-auto" />
+                                                        <Eye className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>

@@ -11,14 +11,18 @@ import {
   User,
   Power,
 } from 'lucide-react';
-import user from '../../img/man-head.png'
-import logout from '../../img/power3.png'
+import user from '../../img/man-head.png';
+import logoutImg from '../../img/power3.png';
+import axios from 'axios';
+import { baseUrl } from '../../utils/ApiConstants';
 
 const AdminSidebar = ({ isOpen = true, onToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeNav, setActiveNav] = useState('');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [adminName, setAdminName] = useState('');
+  const [adminRole, setAdminRole] = useState('');
   const profileBtnRef = useRef(null);
   const profileMenuRef = useRef(null);
 
@@ -77,6 +81,26 @@ const AdminSidebar = ({ isOpen = true, onToggle }) => {
   };
 
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${baseUrl}/auth/meAll`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        // console.log(res.data);
+        setAdminName(res.data.data.name || '');
+        setAdminRole(res.data.data.role || '');
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
     const onDocMouseDown = (e) => {
       if (!isProfileMenuOpen) return;
       const btn = profileBtnRef.current;
@@ -96,6 +120,14 @@ const AdminSidebar = ({ isOpen = true, onToggle }) => {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [isProfileMenuOpen]);
+
+  const getInitials = (name) => {
+    if (!name) return '';
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] || '';
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (first + last).toUpperCase();
+  };
 
   const NavItem = ({ name, path, icon: Icon, label }) => {
     const isActive = activeNav === name;
@@ -254,7 +286,7 @@ const AdminSidebar = ({ isOpen = true, onToggle }) => {
                 ].join(' ')}
               >
                 <div className="grid place-items-center h-8 w-8 rounded-full bg-white ring-1 ring-black/5">
-                  <img src={logout} alt="User" className="h-[10] w-[10] rounded-full" />
+                  <img src={logoutImg} alt="User" className="h-[10] w-[10] rounded-full" />
                 </div>
                 <span className="text-[16px] font-medium">Log Out</span>
               </button>
@@ -272,17 +304,15 @@ const AdminSidebar = ({ isOpen = true, onToggle }) => {
             ].join(' ')}
             onClick={() => setIsProfileMenuOpen((v) => !v)}
           >
-            <img
-              src="https://i.pravatar.cc/80?img=47"
-              alt="profile"
-              className="h-9 w-9 rounded-full ring-2 ring-white/20"
-            />
+            <div className="h-9 w-9 rounded-full ring-2 ring-white/20 bg-[#332173] flex items-center justify-center text-white text-[14px] font-bold uppercase shrink-0">
+              {getInitials(adminName)}
+            </div>
             <div className="min-w-0 flex-1 text-left">
-              <div className="text-[12px] font-semibold leading-4 truncate">
-                Admin User
+              <div className="text-[12px] font-semibold leading-4 truncate capitalize">
+                {adminName || 'Admin User'}
               </div>
               <div className="text-[10px] text-white/65 leading-4 truncate">
-                Administrator
+                {adminRole || 'Administrator'}
               </div>
             </div>
             <ChevronsUpDown size={16} className="text-white/70" />

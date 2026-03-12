@@ -13,9 +13,12 @@ import exp from '../img/exp-check.png'
 import map from '../img/map.png'
 import calender from '../img/calender.png'
 import city from '../img/city.png'
+import benefitsimg from '../img/benefits.png'
+
 
 function CreateJD() {
     const location = useLocation();
+
     const [formData, setFormData] = useState({
         offerId: '',
         companyName: '',
@@ -23,6 +26,9 @@ function CreateJD() {
         qualifications: '',
         benefits: '',
         additionalNotes: '',
+        location: '',
+        dueDate: '',
+        employmentType: '',
     });
 
     const [creating, setCreating] = useState(false);
@@ -46,10 +52,26 @@ function CreateJD() {
 
     useEffect(() => {
         if (location.state?.offerId) {
+            let locationStr = '';
+            if (Array.isArray(location.state.location)) {
+                locationStr = location.state.location.join(', ');
+            } else if (location.state.location) {
+                locationStr = location.state.location;
+            }
+
+            let dueDateStr = '';
+            if (location.state.dueDate) {
+                const date = new Date(location.state.dueDate);
+                dueDateStr = date.toISOString().split('T')[0];
+            }
+
             setFormData((prev) => ({
                 ...prev,
                 offerId: location.state.offerId,
                 companyName: location.state.companyName || '',
+                location: locationStr,
+                dueDate: dueDateStr,
+                employmentType: location.state.employmentType || '',
             }));
         }
     }, [location.state]);
@@ -92,6 +114,9 @@ function CreateJD() {
                     qualifications: formData.qualifications,
                     benefits: formData.benefits,
                     additionalNotes: formData.additionalNotes,
+                    location: formData.location,
+                    dueDate: formData.dueDate,
+                    employmentType: formData.employmentType,
                 },
                 {
                     headers: {
@@ -327,6 +352,58 @@ function CreateJD() {
     const summaryText = generatedJD?.jobSummary || '';
     const summaryShort = summaryText.length > 260 ? `${summaryText.slice(0, 260)}...` : summaryText;
 
+    const extractExperience = useMemo(() => {
+        if (!generatedJD?.aiGenerationDetails?.rawAIResponse) return '—';
+
+        const raw = generatedJD.aiGenerationDetails.rawAIResponse;
+
+        const patterns = [
+            /(\d+)\s*(?:\+)?\s*years?\s*(?:of)?\s*experience/i,
+            /minimum\s*(?:of)?\s*(\d+)\s*years?/i,
+            /at\s*least\s*(\d+)\s*years?/i,
+            /(\d+)\s*-\s*(\d+)\s*years?/i
+        ];
+
+        for (const pattern of patterns) {
+            const match = raw.match(pattern);
+            if (match) {
+                if (match[2]) {
+                    return `${match[1]}-${match[2]} Years`;
+                }
+                return `${match[1]}+ Years`;
+            }
+        }
+
+        return '—';
+    }, [generatedJD]);
+
+    const formatDueDate = (dateStr) => {
+        if (!dateStr) return '—';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
+    const displayLocation = useMemo(() => {
+        if (generatedJD?.location) {
+            return Array.isArray(generatedJD.location)
+                ? generatedJD.location.join(', ')
+                : generatedJD.location;
+        }
+        return formData.location || '—';
+    }, [generatedJD, formData.location]);
+
+    const displayEmploymentType = useMemo(() => {
+        return generatedJD?.employmentType || formData.employmentType || 'Full-Time';
+    }, [generatedJD, formData.employmentType]);
+
+    const displayDueDate = useMemo(() => {
+        const dateStr = generatedJD?.dueDate || formData.dueDate;
+        return formatDueDate(dateStr);
+    }, [generatedJD, formData.dueDate]);
 
     return (
         <div className="min-h-screen ">
@@ -482,7 +559,7 @@ function CreateJD() {
                             className={`h-9 px-4 rounded-lg border text-sm font-medium transition-colors
                                 ${(!generatedJD || !jdUrl)
                                     ? 'opacity-50 cursor-not-allowed border-gray-200 text-gray-400 bg-white'
-                                    : 'border-[#6D5EF8]/40 text-[#5B4BFF] bg-white hover:bg-[#F0EFFF]'
+                                    : 'border-[#624AB3] text-[#624AB3] bg-white hover:bg-[#F0EFFF]'
                                 }`}
                         >
                             Share Link
@@ -494,8 +571,8 @@ function CreateJD() {
                             disabled={creating || !formData.offerId || generatedJD}
                             className={`h-9 px-5 rounded-lg text-sm font-medium shadow-sm transition-colors
                                 ${(creating || !formData.offerId || generatedJD)
-                                    ? 'opacity-50 cursor-not-allowed bg-[#5B4BFF] text-white'
-                                    : 'bg-[#5B4BFF] text-white hover:bg-[#4A3CF0]'
+                                    ? 'opacity-50 cursor-not-allowed bg-gradient-to-r from-[#5D46AD] to-[#9778FA] text-white'
+                                    : 'bg-gradient-to-r from-[#5D46AD] to-[#9778FA] text-white hover:from-[#4A3CF0] hover:to-[#8A6DFB]'
                                 }`}
                         >
                             {creating ? 'Creating...' : 'Create'}
@@ -536,10 +613,6 @@ function CreateJD() {
                                         className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-xl
                                             outline-none text-sm bg-gray-50 cursor-not-allowed"
                                     />
-                                    {/* <ChevronDown
-                                        size={18}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                    /> */}
                                 </div>
                             </div>
 
@@ -548,7 +621,7 @@ function CreateJD() {
                                     Key Responsibilities
                                 </label>
 
-                                <div className="min-h-11 w-full px-3 py-2 border border-gray-200 rounded-xl bg-white flex flex-wrap gap-2 items-center">
+                                <div className="">
                                     {keyRespItems.map((tag, idx) => (
                                         <span
                                             key={`${tag}-${idx}`}
@@ -571,7 +644,8 @@ function CreateJD() {
                                         onChange={(e) => setKeyRespDraft(e.target.value)}
                                         onKeyDown={onKeyRespKeyDown}
                                         placeholder={keyRespItems.length ? 'Add more...' : 'Type and press Enter'}
-                                        className="flex-1 min-w-[160px] outline-none text-sm placeholder:text-gray-400"
+                                        className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-xl
+                                            outline-none text-sm bg-white focus:ring-2 focus:ring-[#5B4BFF]/20 focus:border-[#5B4BFF]/40"
                                     />
                                 </div>
 
@@ -598,10 +672,6 @@ function CreateJD() {
                                         placeholder="Enter Required Qualifications"
                                         className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-xl
                                             outline-none text-sm bg-white focus:ring-2 focus:ring-[#5B4BFF]/20 focus:border-[#5B4BFF]/40"
-                                    />
-                                    <ChevronDown
-                                        size={18}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                                     />
                                 </div>
                             </div>
@@ -707,12 +777,12 @@ function CreateJD() {
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                                     <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white overflow-hidden">
                                         <div className="p-5 space-y-6 relative max-h-[560px] overflow-y-auto pr-4
-    [&::-webkit-scrollbar]:w-1.5
-    [&::-webkit-scrollbar-track]:bg-gray-100
-    [&::-webkit-scrollbar-track]:rounded-full
-    [&::-webkit-scrollbar-thumb]:bg-[#5B4BFF]
-    [&::-webkit-scrollbar-thumb]:rounded-full
-    [&::-webkit-scrollbar-thumb]:hover:bg-[#4A3CF0]"
+                                            [&::-webkit-scrollbar]:w-1.5
+                                            [&::-webkit-scrollbar-track]:bg-gray-100
+                                            [&::-webkit-scrollbar-track]:rounded-full
+                                            [&::-webkit-scrollbar-thumb]:bg-[#5B4BFF]
+                                            [&::-webkit-scrollbar-thumb]:rounded-full
+                                            [&::-webkit-scrollbar-thumb]:hover:bg-[#4A3CF0]"
                                             style={{ scrollbarWidth: 'thin', scrollbarColor: '#5B4BFF #f3f4f6' }}>
 
                                             <div>
@@ -853,36 +923,12 @@ function CreateJD() {
                                                 )}
                                             </div>
 
-
                                             <div>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-8 h-8 rounded-lg bg-[#F0EFFF] flex items-center justify-center text-[#5B4BFF]">
-                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                                            <path
-                                                                d="M20 7H4v13h16V7Z"
-                                                                stroke="currentColor"
-                                                                strokeWidth="2"
-                                                                strokeLinejoin="round"
-                                                            />
-                                                            <path
-                                                                d="M12 7v13"
-                                                                stroke="currentColor"
-                                                                strokeWidth="2"
-                                                                strokeLinecap="round"
-                                                            />
-                                                            <path
-                                                                d="M4 12h16"
-                                                                stroke="currentColor"
-                                                                strokeWidth="2"
-                                                                strokeLinecap="round"
-                                                            />
-                                                            <path
-                                                                d="M7.5 7c-1.38 0-2.5-1.12-2.5-2.5S6.12 2 7.5 2C9.5 2 12 4.5 12 7c0-2.5 2.5-5 4.5-5C17.88 2 19 3.12 19 4.5S17.88 7 16.5 7"
-                                                                stroke="currentColor"
-                                                                strokeWidth="2"
-                                                                strokeLinejoin="round"
-                                                            />
-                                                        </svg>
+                                                        <div className="w-7 h-7 flex items-center justify-center">
+                                                            <img src={benefitsimg} alt="" />
+                                                        </div>
                                                     </div>
                                                     <h3 className="font-semibold text-gray-900">Benefits</h3>
                                                 </div>
@@ -907,7 +953,7 @@ function CreateJD() {
                                                                     value={item}
                                                                     onChange={(e) => handleArrayFieldChange('benefits', index, e.target.value)}
                                                                     className="flex-1 h-10 px-4 border border-gray-200 rounded-xl outline-none text-sm
-              focus:ring-2 focus:ring-[#5B4BFF]/20 focus:border-[#5B4BFF]/40"
+                                                                        focus:ring-2 focus:ring-[#5B4BFF]/20 focus:border-[#5B4BFF]/40"
                                                                 />
                                                                 <button
                                                                     type="button"
@@ -933,7 +979,7 @@ function CreateJD() {
                                         </div>
                                     </div>
 
-                                    {/* <div className="space-y-4">
+                                    <div className="space-y-4">
                                         <div className="rounded-2xl border border-gray-200 bg-white py-5 px-3">
                                             <div className="flex items-center gap-2 mb-4">
                                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center">
@@ -950,10 +996,13 @@ function CreateJD() {
                                                         </div>
                                                         <div className=''>
                                                             <div className="text-xs text-gray-500 mb-1">Employment <br /> Type</div>
-                                                            <div className="font-medium text-center text-gray-900">Full Time</div>
+                                                            <div className="font-medium text-gray-900">
+                                                                {displayEmploymentType}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <div className="text-sm">
                                                     <div className='flex gap-2'>
                                                         <div className="w-8 h-8 rounded-lg flex items-center justify-center">
@@ -961,10 +1010,11 @@ function CreateJD() {
                                                         </div>
                                                         <div className=''>
                                                             <div className="text-xs text-gray-500 mb-1">Experience</div>
-                                                            <div className="font-medium text-gray-900">—</div>
+                                                            <div className="font-medium text-gray-900">{extractExperience}</div>
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <div className="text-sm">
                                                     <div className='flex gap-2'>
                                                         <div className="w-8 h-8 rounded-lg flex items-center justify-center">
@@ -972,18 +1022,23 @@ function CreateJD() {
                                                         </div>
                                                         <div className=''>
                                                             <div className="text-xs text-gray-500 mb-1">Location</div>
-                                                            <div className="font-medium text-gray-900">—</div>
+                                                            <div className="font-medium text-gray-900">
+                                                                {displayLocation}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
+
                                                 <div className="text-sm">
                                                     <div className='flex gap-2'>
                                                         <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                                                             <img src={calender} alt="" />
                                                         </div>
                                                         <div>
-                                                            <div className="text-xs text-gray-500 mb-1">Timeline</div>
-                                                            <div className="font-medium text-gray-900">—</div>
+                                                            <div className="text-xs text-gray-500 mb-1">Deadline</div>
+                                                            <div className="font-medium text-gray-900">
+                                                                {displayDueDate}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1002,7 +1057,7 @@ function CreateJD() {
                                                 {formData.additionalNotes || '—'}
                                             </p>
                                         </div>
-                                    </div> */}
+                                    </div>
                                 </div>
                             )}
                         </div>

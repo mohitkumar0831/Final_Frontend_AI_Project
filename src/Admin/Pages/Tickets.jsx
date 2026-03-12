@@ -253,9 +253,9 @@ const Tickets = () => {
                                                 <div className="flex justify-center">
                                                     <button
                                                         onClick={() => openDetail(t)}
-                                                        className="w-8 h-8 rounded-full border border-[#D7D0FF] bg-[#F3F2FF] text-[#6D5BD0] grid place-items-center hover:bg-[#ECEAFF]"
+                                                        className="w-8 h-8 rounded-lg bg-[#F6F6FF] hover:bg-[#EDE9FF] transition flex items-center justify-center"
                                                     >
-                                                        <Eye className="w-4 h-4" />
+                                                        <Eye className="w-4 h-4 text-[#5B34F1]" />
                                                     </button>
                                                 </div>
                                             </td>

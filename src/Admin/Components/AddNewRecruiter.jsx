@@ -216,15 +216,16 @@ function AddNewRecruiter({ onSave, onCancel, editData }) {
                         <button
                             type="button"
                             onClick={onCancel}
-                            className="flex-1 h-12 rounded-lg border border-[#6D5DD3] text-[#6D5DD3] font-medium hover:bg-[#6D5DD3]/5 transition"
+                            className="flex-1 h-10 rounded-lg border border-[#6D5DD3] text-[#6D5DD3] font-medium hover:bg-[#6D5DD3]/5 transition"
                         >
                             Cancel
                         </button>
+
                         <button
                             type="submit"
-                            className="flex-1 h-12 rounded-lg bg-[#6D5DD3] text-white font-medium hover:brightness-95 transition"
+                            className="flex-[2] h-10 rounded-lg bg-gradient-to-r from-[#684FBC] to-[#886BE6] text-white font-medium hover:brightness-95 transition"
                         >
-                            {editData ? 'Update' : 'Save'}
+                            {editData ? "Update" : "Save"}
                         </button>
                     </div>
                 </form>

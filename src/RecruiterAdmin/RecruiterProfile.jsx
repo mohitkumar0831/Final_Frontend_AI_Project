@@ -153,7 +153,7 @@ const RecruiterProfile = () => {
                             name="name"
                             value={formData.name}
                             disabled
-                            className="mt-2 w-full h-11 px-4 border rounded-lg hover:cursor-not-allowed bg-gray-100"
+                            className="mt-2 w-full h-11 px-4 border rounded-lg hover:cursor-not-allowed"
                         />
                     </div>
 
@@ -166,7 +166,7 @@ const RecruiterProfile = () => {
                             name="email"
                             value={formData.email}
                             disabled
-                            className="mt-2 w-full h-11 px-4 border rounded-lg hover:cursor-not-allowed bg-gray-100"
+                            className="mt-2 w-full h-11 px-4 border rounded-lg hover:cursor-not-allowed"
                         />
                     </div>
 
@@ -200,7 +200,7 @@ const RecruiterProfile = () => {
                             name="role"
                             value={formData.role}
                             disabled
-                            className="mt-2 w-full h-11 px-4 border rounded-lg hover:cursor-not-allowed bg-gray-100"
+                            className="mt-2 w-full h-11 px-4 border rounded-lg hover:cursor-not-allowed"
                         >
                             <option>{formData.role}</option>
                         </select>
@@ -219,7 +219,7 @@ const RecruiterProfile = () => {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        className="px-6 py-2 bg-gradient-to-r from-[#6950BD] to-[#896BE6] text-white rounded-lg hover:bg-purple-700"
                     >
                         {saving ? "Saving..." : "Generate"}
                     </button>

@@ -1,21 +1,72 @@
-import axios from 'axios';
-import { Search, Filter, Edit, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import Pagination from '../components/LandingPage/Pagination';
-import { superAdminBaseUrl } from '../utils/ApiConstants';
+import axios from "axios";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Eye, ChevronDown } from "lucide-react";
+import Pagination from "../components/LandingPage/Pagination";
+import { superAdminBaseUrl } from "../utils/ApiConstants";
+
+function StatCard({
+    label,
+    value,
+    iconImage,
+    chartImage,
+    valueColor = "text-indigo-600",
+}) {
+    const [firstWord, ...rest] = (label || "").split(" ");
+    const restWords = rest.join(" ");
+
+    const s = { valueColor: valueColor };
+    const image = chartImage;
+
+    return (
+        <div className="rounded-xl bg-white px-5 py-4 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between">
+                <p className="text-lg font-medium text-gray-500">
+                    {firstWord}
+                    {restWords && (
+                        <>
+                            <br />
+                            {restWords}
+                        </>
+                    )}
+                </p>
+                <div className="h-9 w-9">
+                    {iconImage ? (
+                        <img
+                            src={iconImage}
+                            alt=""
+                            className="h-full w-full object-contain"
+                        />
+                    ) : (
+                        <div className="h-full w-full rounded-lg bg-indigo-100" />
+                    )}
+                </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+                <p className={`text-3xl font-bold ${s.valueColor}`}>{value}</p>
+                {image ? <img src={image} alt="" className="h-8" /> : null}
+            </div>
+        </div>
+    );
+}
 
 function EnquiryMessages() {
     const [currentPage, setCurrentPage] = useState(1);
     const [tickets, setTickets] = useState([]);
     const [filteredTickets, setFilteredTickets] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+
+    const [searchTerm, setSearchTerm] = useState("");
+
     const [showPopup, setShowPopup] = useState(false);
-    const [popupMessage, setPopupMessage] = useState('Ok, we will look on this issue as soon as possible.');
+    const [popupMessage, setPopupMessage] = useState(
+        "Ok, we will look on this issue as soon as possible."
+    );
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [sending, setSending] = useState(false);
 
-    const itemsPerPage = 5;
+    const [selectedIds, setSelectedIds] = useState(new Set());
+
+    const itemsPerPage = 7;
     const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -29,14 +80,15 @@ function EnquiryMessages() {
                 const response = await axios.get(`${superAdminBaseUrl}/enquiry/all`, {
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem("token")}`
-                    }
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
                 });
 
                 const data = response.data;
                 console.log(data);
 
-                if (data.status === 'success' && data.data) {
+
+                if (data.status === "success" && data.data) {
                     setTickets(data.data);
                     setFilteredTickets(data.data);
                 }
@@ -50,205 +102,310 @@ function EnquiryMessages() {
         fetchTotalEnquiry();
     }, []);
 
-    const handleEditClick = (ticket) => {
+    const normalizeStatus = (t) => {
+        const s = (t?.status || "Pending").toString().toLowerCase();
+        if (s === "closed" || s === "resolved") return "Closed";
+        return "Pending";
+    };
+
+    const totals = useMemo(() => {
+        const total = tickets.length || 0;
+        const pending = tickets.filter((t) => normalizeStatus(t) === "Pending")
+            .length;
+        const closed = tickets.filter((t) => normalizeStatus(t) === "Closed").length;
+        return { total, pending, closed };
+    }, [tickets]);
+
+    const applySearch = (value) => {
+        const term = (value || "").trim();
+        if (term === "") {
+            setFilteredTickets(tickets);
+        } else {
+            const filtered = tickets.filter((ticket) => {
+                const idMatch =
+                    ticket._id && ticket._id.toLowerCase().includes(term.toLowerCase());
+                const emailMatch =
+                    ticket.emailid &&
+                    ticket.emailid.toLowerCase().includes(term.toLowerCase());
+                return idMatch || emailMatch;
+            });
+            setFilteredTickets(filtered);
+        }
+        setCurrentPage(1);
+    };
+
+    const handleSearch = () => applySearch(searchTerm);
+
+    const handleSearchInputChange = (e) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+        applySearch(value);
+    };
+
+    const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+    const handleViewClick = (ticket) => {
         setSelectedTicket(ticket);
+        setPopupMessage(ticket?.message || "NA");
         setShowPopup(true);
     };
 
     const handleClosePopup = () => {
         setShowPopup(false);
         setSelectedTicket(null);
-        setPopupMessage('Ok, we will look on this issue as soon as possible.');
+        setPopupMessage("Ok, we will look on this issue as soon as possible.");
     };
 
     const handleSaveMessage = () => {
         if (!selectedTicket) return;
-
-        console.log('Message saved:', popupMessage);
         setShowPopup(false);
         setSelectedTicket(null);
-        setPopupMessage('Ok, we will look on this issue as soon as possible.');
+        setPopupMessage("Ok, we will look on this issue as soon as possible.");
     };
 
-    const handleSearch = () => {
-        if (searchTerm.trim() === '') {
-            setFilteredTickets(tickets);
-        } else {
-            const filtered = tickets.filter(ticket => {
-                const idMatch = ticket._id && ticket._id.toLowerCase().includes(searchTerm.toLowerCase());
-                const emailMatch = ticket.emailid && ticket.emailid.toLowerCase().includes(searchTerm.toLowerCase());
-                return idMatch || emailMatch;
-            });
-            setFilteredTickets(filtered);
-        }
-        setCurrentPage(1);
-    };
-
-    const handleSearchInputChange = (e) => {
-        const value = e.target.value;
-        setSearchTerm(value);
-
-        if (value.trim() === '') {
-            setFilteredTickets(tickets);
-        } else {
-            const filtered = tickets.filter(ticket => {
-                const idMatch = ticket._id && ticket._id.toLowerCase().includes(value.toLowerCase());
-                const emailMatch = ticket.emailid && ticket.emailid.toLowerCase().includes(value.toLowerCase());
-                return idMatch || emailMatch;
-            });
-            setFilteredTickets(filtered);
-        }
-        setCurrentPage(1);
-    };
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
-
-    const stats = [
-        { label: 'Total Messages', value: tickets.length || '0', icon: '📧', bgColor: 'bg-blue-100', iconColor: 'text-blue-500' },
-        { label: 'Closed Messages', value: 'NA', icon: '✅', bgColor: 'bg-green-100', iconColor: 'text-green-500' },
-        { label: 'Pending Messages', value: 'NA', icon: '⏱️', bgColor: 'bg-yellow-100', iconColor: 'text-yellow-500' },
-        { label: 'Deleted Messages', value: 'NA', icon: '🗑️', bgColor: 'bg-red-100', iconColor: 'text-red-500' }
-    ];
-
-    const getFieldValue = (value) => {
-        return value || 'NA';
-    };
+    const getFieldValue = (value) => value || "NA";
 
     const formatDate = (dateString) => {
-        if (!dateString) return 'NA';
+        if (!dateString) return "NA";
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        const dd = String(date.getDate()).padStart(2, "0");
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const yy = String(date.getFullYear()).slice(-2);
+        return `${dd}-${mm}-${yy}`;
     };
 
     const getInitials = (name) => {
-        if (!name) return 'NA';
-        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        if (!name) return "NA";
+        return name
+            .split(" ")
+            .filter(Boolean)
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase();
     };
+
+    const isAllCurrentSelected =
+        currentItems.length > 0 &&
+        currentItems.every((t) => t?._id && selectedIds.has(t._id));
+
+    const toggleSelectAllCurrent = () => {
+        const next = new Set(selectedIds);
+        if (isAllCurrentSelected) {
+            currentItems.forEach((t) => t?._id && next.delete(t._id));
+        } else {
+            currentItems.forEach((t) => t?._id && next.add(t._id));
+        }
+        setSelectedIds(next);
+    };
+
+    const toggleSelectOne = (id) => {
+        if (!id) return;
+        const next = new Set(selectedIds);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        setSelectedIds(next);
+    };
+
+    const handleMarkResolved = () => {
+        if (selectedIds.size === 0) return;
+
+        const update = (arr) =>
+            arr.map((t) =>
+                selectedIds.has(t?._id) ? { ...t, status: "Closed" } : t
+            );
+
+        const nextTickets = update(tickets);
+        setTickets(nextTickets);
+
+        const term = searchTerm;
+        const nextFiltered = update(filteredTickets);
+        setFilteredTickets(nextFiltered);
+
+        setSelectedIds(new Set());
+
+        setCurrentPage(1);
+
+        void term;
+    };
+
+    const statCards = [
+        {
+            label: "Total Enquiries",
+            value: totals.total,
+            valueColor: "text-indigo-600",
+            iconImage: null,
+            chartImage: null,
+        },
+        {
+            label: "Pending Enquiries",
+            value: totals.pending,
+            valueColor: "text-pink-500",
+            iconImage: null,
+            chartImage: null,
+        },
+        {
+            label: "Closed Enquiries",
+            value: totals.closed,
+            valueColor: "text-indigo-600",
+            iconImage: null,
+            chartImage: null,
+        },
+    ];
 
     return (
         <div className="min-h-screen">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Tickets</h1>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    {stats.map((stat, index) => (
-                        <div key={index} className="bg-white rounded-lg border border-gray-300 shadow-sm p-5 flex items-center space-x-4">
-                            <div className={`${stat.bgColor} p-3 rounded-[50%]`}>
-                                <span className="text-2xl">{stat.icon}</span>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                                <p className="text-sm text-gray-500">{stat.label}</p>
-                            </div>
-                        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    {statCards.map((c, idx) => (
+                        <StatCard key={idx} {...c} />
                     ))}
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-4 mb-6">
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="flex-1 relative">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">Enquiries</h2>
+
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-full md:w-[240px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search by ID or Email"
+                                placeholder="Search"
                                 value={searchTerm}
                                 onChange={handleSearchInputChange}
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                className="w-full pl-4 pr-10 py-2 shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                                className="w-full h-9 pl-9 pr-3 rounded-md border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
-                            <button
-                                onClick={handleSearch}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white p-2 rounded-md hover:bg-gray-800"
-                            >
-                                <Search className="w-4 h-4" />
-                            </button>
                         </div>
-                        <button className="flex items-center justify-center gap-2 px-4 py-2 shadow-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-                            <Filter className="w-4 h-4" />
-                            <span>Filters</span>
+
+                        <button
+                            onClick={handleMarkResolved}
+                            disabled={selectedIds.size === 0}
+                            className="h-9 px-4 rounded-md bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Mark As Resolved
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden">
+                <div className="bg-white rounded-xl border border-indigo-200 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created Date</th>
-                                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th> */}
+                            <thead className="bg-indigo-50 border-b border-indigo-100">
+                                <tr className="text-left text-xs font-semibold text-gray-700">
+                                    <th className="px-4 py-3 w-10">
+                                        <input
+                                            type="checkbox"
+                                            checked={isAllCurrentSelected}
+                                            onChange={toggleSelectAllCurrent}
+                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                    </th>
+                                    <th className="px-4 py-3 whitespace-nowrap">Serial No.</th>
+                                    <th className="px-4 py-3 whitespace-nowrap">Company Name</th>
+                                    <th className="px-4 py-3 whitespace-nowrap">Email</th>
+                                    <th className="px-4 py-3 whitespace-nowrap">Phone</th>
+                                    <th className="px-4 py-3 whitespace-nowrap">Created on</th>
+                                    <th className="px-4 py-3 whitespace-nowrap">
+                                        <span className="inline-flex items-center gap-1">
+                                            Status <ChevronDown className="w-3.5 h-3.5" />
+                                        </span>
+                                    </th>
+                                    <th className="px-4 py-3 whitespace-nowrap">Message</th>
+                                    <th className="px-4 py-3 whitespace-nowrap text-center">
+                                        Action
+                                    </th>
                                 </tr>
                             </thead>
 
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="divide-y divide-gray-100">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                                        <td
+                                            colSpan={9}
+                                            className="px-6 py-10 text-center text-gray-500"
+                                        >
                                             Loading...
                                         </td>
                                     </tr>
                                 ) : currentItems.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                                            No tickets found
+                                        <td
+                                            colSpan={9}
+                                            className="px-6 py-10 text-center text-gray-500"
+                                        >
+                                            No enquiries found
                                         </td>
                                     </tr>
                                 ) : (
-                                    currentItems.map((ticket, index) => (
-                                        <tr key={ticket._id || index} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {indexOfFirstItem + index + 1}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-                                                        {getInitials(ticket.companyName)}
+                                    currentItems.map((ticket, index) => {
+                                        const status = normalizeStatus(ticket);
+                                        const isSelected =
+                                            ticket?._id && selectedIds.has(ticket._id);
+
+                                        return (
+                                            <tr key={ticket._id || index} className="hover:bg-gray-50">
+                                                <td className="px-4 py-4">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!isSelected}
+                                                        onChange={() => toggleSelectOne(ticket?._id)}
+                                                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                </td>
+
+                                                <td className="px-4 py-4 text-sm text-gray-800">
+                                                    {indexOfFirstItem + index + 1}
+                                                </td>
+
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-3 min-w-[180px]">
+                                                        <span className="text-sm text-gray-900">
+                                                            {getFieldValue(ticket.companyName)}
+                                                        </span>
                                                     </div>
-                                                    <span className="ml-3 text-sm text-gray-900">
-                                                        {getFieldValue(ticket.companyName)}
+                                                </td>
+
+                                                <td className="px-4 py-4 text-sm text-gray-800">
+                                                    {getFieldValue(ticket.emailid)}
+                                                </td>
+
+                                                <td className="px-4 py-4 text-sm text-gray-800">
+                                                    {getFieldValue(ticket.phone)}
+                                                </td>
+
+                                                <td className="px-4 py-4 text-sm text-gray-800 whitespace-nowrap">
+                                                    {formatDate(ticket.createdAt)}
+                                                </td>
+
+                                                <td className="px-4 py-4">
+                                                    <span
+                                                        className={[
+                                                            "inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium",
+                                                            status === "Closed"
+                                                                ? "bg-green-50 text-green-600"
+                                                                : "bg-orange-50 text-orange-600",
+                                                        ].join(" ")}
+                                                    >
+                                                        {status}
                                                     </span>
-                                                </div>
-                                            </td>
+                                                </td>
 
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {getFieldValue(ticket.emailid)}
-                                            </td>
+                                                <td className="px-4 py-4 text-sm text-gray-800 max-w-[240px] truncate">
+                                                    {getFieldValue(ticket.message)}
+                                                </td>
 
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {getFieldValue(ticket.phone)}
-                                            </td>
-
-                                            <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                                                {getFieldValue(ticket.message)}
-                                            </td>
-
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {formatDate(ticket.createdAt)}
-                                            </td>
-
-                                            {/* Actions */}
-                                            {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <button onClick={() => handleEditClick(ticket)} className="text-blue-600 hover:text-blue-800">
-                                                        <Edit className="w-4 h-4" />
+                                                <td className="px-4 py-4 text-center">
+                                                    <button
+                                                        onClick={() => handleViewClick(ticket)}
+                                                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                                                        title="View"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
                                                     </button>
-                                                    <button className="text-red-600 hover:text-red-800">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td> */}
-                                        </tr>
-                                    ))
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -256,48 +413,103 @@ function EnquiryMessages() {
                 </div>
 
                 {!loading && filteredTickets.length > 0 && (
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                    />
+                    <div className="mt-5">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </div>
                 )}
             </div>
 
             {showPopup && (
-                <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-gray-900">Edit Notification</h3>
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="w-full max-w-[460px] bg-white rounded-[32px] shadow-2xl overflow-hidden">
+                        <div className="relative px-8 pt-8">
+                            <h3 className="text-2xl font-semibold text-gray-900 text-center">
+                                Enquiry Details
+                            </h3>
+
                             <button
                                 onClick={handleClosePopup}
-                                className="text-gray-400 hover:text-gray-600"
+                                className="absolute right-6 top-6 text-2xl leading-none text-gray-700 hover:text-gray-900"
+                                aria-label="Close"
                             >
-                                <X className="w-5 h-5" />
+                                ×
                             </button>
-                        </div>
-                        <textarea
-                            value={popupMessage}
-                            onChange={(e) => setPopupMessage(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                            rows="4"
-                            placeholder="Enter your message..."
-                        />
-                        <div className="flex gap-3 mt-4">
-                            <button
-                                onClick={handleClosePopup}
-                                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
-                                disabled={sending}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveMessage}
-                                disabled={sending}
-                                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
-                            >
-                                {sending ? 'Sending...' : 'Save'}
-                            </button>
+
+                            <div className="mt-8 space-y-2 text-[17px]">
+                                <div className="flex items-center justify-center gap-2 text-center flex-wrap">
+                                    <span className="font-semibold text-gray-900">Company Name</span>
+                                    <span className="font-semibold text-gray-900">:</span>
+                                    <span className="text-gray-600">
+                                        {getFieldValue(selectedTicket?.companyName)}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-center gap-2 text-center flex-wrap">
+                                    <span className="font-semibold text-gray-900">Raised By</span>
+                                    <span className="font-semibold text-gray-900">:</span>
+                                    <span className="text-gray-600">
+                                        {getFieldValue(
+                                            selectedTicket?.raisedBy ||
+                                            selectedTicket?.name ||
+                                            selectedTicket?.fullName
+                                        )}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-center gap-2 text-center flex-wrap">
+                                    <span className="font-semibold text-gray-900">Email</span>
+                                    <span className="font-semibold text-gray-900">:</span>
+                                    <span className="text-gray-600">
+                                        {getFieldValue(selectedTicket?.emailid)}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-center gap-2 text-center flex-wrap">
+                                    <span className="font-semibold text-gray-900">Phone</span>
+                                    <span className="font-semibold text-gray-900">:</span>
+                                    <span className="text-gray-600">
+                                        {getFieldValue(selectedTicket?.phone)}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-center gap-2 text-center flex-wrap">
+                                    <span className="font-semibold text-gray-900">Date Created</span>
+                                    <span className="font-semibold text-gray-900">:</span>
+                                    <span className="text-gray-600">
+                                        {formatDate(selectedTicket?.createdAt)}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-center gap-3 text-center flex-wrap">
+                                    <span className="font-semibold text-gray-900">Status</span>
+                                    <span className="font-semibold text-gray-900">:</span>
+
+                                    <span
+                                        className={[
+                                            "inline-flex items-center justify-center rounded-full px-7 py-2 text-sm font-medium",
+                                            normalizeStatus(selectedTicket) === "Closed"
+                                                ? "bg-green-50 text-green-600"
+                                                : "bg-orange-50 text-orange-500",
+                                        ].join(" ")}
+                                    >
+                                        {normalizeStatus(selectedTicket)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="my-3 border-t border-dashed border-gray-300" />
+
+                            <h4 className="text-xl font-semibold text-gray-900 text-center">
+                                Message
+                            </h4>
+
+                            <p className="mt-4 pb-10 text-center text-gray-600 leading-relaxed px-2">
+                                {getFieldValue(selectedTicket?.message)}
+                            </p>
                         </div>
                     </div>
                 </div>
