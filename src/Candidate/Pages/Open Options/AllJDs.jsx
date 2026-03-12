@@ -21,8 +21,6 @@ const AllJDs = () => {
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     const filterRef = useRef(null);
 
-    // Get unique locations and companies for filter options
-    // Location from Offer model is [String] array — flatten all locations
     const uniqueLocations = [...new Set(jdData.flatMap(jd => {
         const loc = jd.offerId?.location || jd.location;
         if (Array.isArray(loc)) return loc;
@@ -31,7 +29,7 @@ const AllJDs = () => {
     }))].filter(Boolean);
     const uniqueCompanies = [...new Set(jdData.map(jd => jd.company))].filter(Boolean);
 
-    // Close filter dropdown when clicking outside
+   
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (filterRef.current && !filterRef.current.contains(event.target)) {

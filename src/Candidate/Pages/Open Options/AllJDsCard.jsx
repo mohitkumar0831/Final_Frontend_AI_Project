@@ -5,24 +5,21 @@ function AllJDsCard({ candidate, handleApplyClick }) {
     const [showSkillsPopup, setShowSkillsPopup] = useState(false);
     const [showAllLocations, setShowAllLocations] = useState(false);
 
-    // offerId is the full populated Offer object from the all-jd API
+   
     const offer = candidate.offerId || {};
 
    
 
 
-    // Location from Offer model is [String] array
     const locArr = Array.isArray(offer.location) ? offer.location : 
                    (typeof offer.location === 'string' ? [offer.location] : []);
     const firstLoc = locArr.length > 0 ? locArr[0] : (offer.workMode || 'N/A');
     const extraLocCount = locArr.length > 1 ? locArr.length - 1 : 0;
 
-    // Dynamic data from offer
     const workMode = offer.workMode || 'Remote';
     const employmentType = offer.employmentType || 'Full-Time';
     const experience = offer.experience ? `${offer.experience} yrs` : 'Not specified';
 
-    // Format due date from offer
     const dueDate = (() => {
         const d = offer.dueDate || candidate.dueDate;
         if (!d) return 'Apply Soon';
@@ -33,7 +30,6 @@ function AllJDsCard({ candidate, handleApplyClick }) {
         } catch { return String(d); }
     })();
 
-    // Format salary from offer
     const salary = (() => {
         const val = offer.salary || candidate.salary;
         if (!val) return '₹ Not Specified';
@@ -45,7 +41,6 @@ function AllJDsCard({ candidate, handleApplyClick }) {
         return String(val);
     })();
 
-    // About the company from offer description
     const aboutCompany = offer.description || candidate.description || '';
 
 
@@ -55,7 +50,7 @@ function AllJDsCard({ candidate, handleApplyClick }) {
     return (
         <>
         <div className="bg-white rounded-[20px] md:rounded-[24px] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 md:p-6 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all relative flex flex-col justify-between">
-            <div className="absolute top-1 md:top-4 right-1 text-fuchsia-600 text-[10px] md:text-[11px] font-semibold px-1 md:px-3 py-1 rounded-full uppercase tracking-wider z-10">
+            <div className=" bg-[#FFF0FD] absolute top-1 md:top-4 right-1 text-fuchsia-600 text-[10px] md:text-[11px] font-semibold px-1 md:px-3 py-1 rounded-full uppercase tracking-wider z-10">
                 {candidate.appliedCandidates?.length || 0}+ Applicants
             </div>
 

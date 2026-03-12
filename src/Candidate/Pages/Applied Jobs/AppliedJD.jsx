@@ -100,6 +100,8 @@ function AppliedJD() {
                 return 'bg-red-50 text-red-500 border border-red-100';
             case 'link_sent':
                 return 'bg-blue-50 text-blue-500 border border-blue-100';
+            case 'applied':
+                return 'bg-[#F3FFEE] text-green-500 border border-green-100';
             default:
                 return 'bg-orange-50 text-orange-400 border border-orange-100';
         }

@@ -45,7 +45,6 @@ function AllJDsHeader({
                                 )}
                             </button>
                             
-                            {/* Filter Dropdown */}
                             {showFilterDropdown && (
                                 <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 p-4 space-y-4">
                                     <div className="flex items-center justify-between pb-2 border-b border-gray-100">

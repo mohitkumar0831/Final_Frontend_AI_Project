@@ -55,13 +55,14 @@ function AppliedJD() {
     const getStatusBadgeClass = (status) => {
         switch (status.toLowerCase()) {
             case 'accepted':
+                return 'bg-[#F3FFEE] text-green-500 border border-green-100';
             case 'filtered':
                 return 'bg-green-50 text-green-500 border border-green-100';
             case 'rejected':
             case 'unfiltered':
                 return 'bg-red-50 text-red-500 border border-red-100';
             default:
-                return 'bg-orange-50 text-orange-400 border border-orange-100';
+                return 'bg-orange-400 text-orange-400 border border-orange-100';
         }
     };
 

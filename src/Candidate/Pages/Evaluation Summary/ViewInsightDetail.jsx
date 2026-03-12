@@ -3,27 +3,40 @@ import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 const ViewInsightDetail = ({ candidate }) => {
   const results = candidate?.raw?.results_data || [];
+  
+  const correctCount = results.filter(q => q?.is_correct).length;
+  const unattemptedCount = results.filter(q => {
+    if (!q) return false;
+    const ans = q.candidate_answer ?? q.given_answer;
+    return ans === null || ans === undefined || ans === '';
+  }).length;
+  const incorrectCount = results.length - correctCount - unattemptedCount;
 
   return (
     <div className="max-w-4xl mx-auto bg-white min-h-screen shadow-sm font-sans text-slate-800">
       
-      <header className="flex items-center p-5 border-b gap-3 bg-gradient-to-r from-indigo-50 to-purple-50/30">
-        <div className="w-11 h-11 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center font-bold text-sm">
-          {candidate?.name?.substring(0, 2)?.toUpperCase() || "NS"}
+      <header className="flex flex-col sm:flex-row sm:items-center p-2 sm:p-5 border-b gap-4 bg-gradient-to-r from-indigo-50 to-purple-50/30">
+        <div className="flex items-center gap-1">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
+            {candidate?.name?.substring(0, 2)?.toUpperCase() || "NS"}
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-bold text-base sm:text-lg leading-tight truncate">{candidate?.jobTitle || "Developer"}</h1>
+            <p className="text-gray-500 text-xs sm:text-sm truncate">{candidate?.company || "—"}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-bold text-lg leading-tight">{candidate?.jobTitle || "Developer"}</h1>
-          <p className="text-gray-500 text-sm">{candidate?.company || "—"}</p>
-        </div>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="px-3 py-1.5 bg-white text-sm font-semibold text-indigo-600 rounded-full border border-indigo-100">
+        <div className=" sm:ml-auto flex flex-wrap items-center gap-1 sm:gap-3">
+          <span className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white text-xs sm:text-sm font-semibold text-indigo-600 rounded-full border border-indigo-100">
             {results.length} Questions
           </span>
-          <span className="px-3 py-1.5 bg-white text-sm font-semibold text-green-600 rounded-full border border-green-100">
-            {results.filter(q => q?.is_correct).length} Correct
+          <span className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white text-xs sm:text-sm font-semibold text-green-600 rounded-full border border-green-100">
+            {correctCount} Correct
           </span>
-          <span className="px-3 py-1.5 bg-white text-sm font-semibold text-red-500 rounded-full border border-red-100">
-            {results.filter(q => q && !q.is_correct).length} Wrong
+          <span className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white text-xs sm:text-sm font-semibold text-red-500 rounded-full border border-red-100">
+            {incorrectCount} Wrong
+          </span>
+          <span className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-white text-xs sm:text-sm font-semibold text-gray-500 rounded-full border border-gray-200">
+            {unattemptedCount} Un-Attempted
           </span>
         </div>
       </header>
@@ -54,50 +67,53 @@ const ViewInsightDetail = ({ candidate }) => {
 
               return (
                 <div key={idx} className="space-y-4">
-                  <div className="bg-pink-50 p-3 rounded-xl flex items-center gap-3 flex-wrap">
-                    <span className="font-semibold px-2">Question {idx + 1}</span>
-                    <span className={`px-4 py-1 rounded-full text-sm font-medium border ${isCorrect ? 'bg-white text-green-600 border-green-100' : 'bg-white text-red-500 border-red-100'}`}>
-                      {isCorrect ? 'Correct' : 'Incorrect'}
+                  <div className="bg-pink-50 p-3 rounded-xl flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <span className="font-semibold px-2 text-sm sm:text-base">Question {idx + 1}</span>
+                    <span className={`px-3 sm:px-4 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium border ${isCorrect ? 'bg-white text-green-600 border-green-100' : 'bg-white text-red-500 border-red-100'}`}>
+                      {isCorrect ? 'Correct' : (!candidateAnswer ? 'Un-Attempted' : 'Incorrect')}
                     </span>
-                    <div className="ml-auto flex items-center gap-2">
-                      <span className="bg-indigo-200 text-indigo-800 px-5 py-1 rounded-full text-sm font-bold uppercase">
+                    <div className="ml-auto flex items-center">
+                      <span className="bg-indigo-200 text-indigo-800 px-3 sm:px-5 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold uppercase truncate max-w-[120px] sm:max-w-none">
                         {sectionName}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-start pt-2">
-                    <h3 className="text-lg font-semibold max-w-2xl">Q. {q.question}</h3>
-                    <span className="border-2 border-indigo-300 text-indigo-600 px-4 py-0.5 rounded-full text-sm font-medium whitespace-nowrap ml-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2 pt-2">
+                    <h3 className="text-base sm:text-lg font-semibold w-full sm:max-w-2xl break-words">Q. {q.question}</h3>
+                    <span className="border-2 border-indigo-300 text-indigo-600 px-3 sm:px-4 py-0.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap self-start sm:self-auto shrink-0">
                       Marks: {score} / {maxScore}
                     </span>
                   </div>
 
                   {isMCQ ? (
                     <div className="space-y-3">
-                      <div className={`flex items-center justify-between p-4 rounded-xl border-2 ${
+                      <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border-2 gap-3 sm:gap-0 ${
                         isCorrect 
                           ? 'bg-green-50 border-green-200' 
-                          : 'bg-red-50 border-red-200'
+                          : (!candidateAnswer ? 'bg-gray-50 border-gray-200' : 'bg-red-50 border-red-200')
                       }`}>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start sm:items-center gap-3">
                           {isCorrect 
-                            ? <CheckCircle2 size={22} className="text-green-500 flex-shrink-0" /> 
-                            : <XCircle size={22} className="text-red-500 flex-shrink-0" />
+                            ? <CheckCircle2 size={20} className="text-green-500 flex-shrink-0 mt-0.5 sm:mt-0" /> 
+                            : (!candidateAnswer 
+                                ? <AlertCircle size={20} className="text-gray-400 flex-shrink-0 mt-0.5 sm:mt-0" /> 
+                                : <XCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5 sm:mt-0" />
+                              )
                           }
-                          <div>
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Your Answer</p>
-                            <p className={`text-sm font-semibold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                              {candidateAnswer || '—'}
+                          <div className="min-w-0">
+                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Your Answer</p>
+                            <p className={`text-sm sm:text-base font-semibold break-words ${isCorrect ? 'text-green-700' : (!candidateAnswer ? 'text-gray-500 italic' : 'text-red-700')}`}>
+                              {candidateAnswer || 'No answer provided'}
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {!isCorrect && correctAnswer && (
-                        <div className="flex items-center justify-between p-4 rounded-xl border-2 bg-green-50 border-green-200">
-                          <div className="flex items-center gap-3">
-                            <CheckCircle2 size={22} className="text-green-500 flex-shrink-0" />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-xl border-2 bg-green-50 border-green-200">
+                          <div className="flex items-start sm:items-center gap-3">
+                            <CheckCircle2 size={20} className="text-green-500 flex-shrink-0 mt-0.5 sm:mt-0" />
                             <div>
                               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Correct Answer</p>
                               <p className="text-sm font-semibold text-green-700">

@@ -105,16 +105,21 @@ function ReportTable({ currentData, startIndex, baseUrl, setSelectedCandidate, s
                                                             }
                                                             enriched.marks = `${obt}/${pos}`;
                                                             enriched.correct = raw.results_data.filter(r => r && r.is_correct).length;
-                                                            enriched.incorrect = raw.results_data.length - enriched.correct;
+                                                            enriched.unattempted = raw.results_data.filter(r => {
+                                                                if (!r) return false;
+                                                                const ans = r.candidate_answer ?? r.given_answer;
+                                                                return ans === null || ans === undefined || ans === '';
+                                                            }).length;
+                                                            enriched.incorrect = raw.results_data.length - enriched.correct - enriched.unattempted;
                                                         }
-                                                        // Exam date from created_at
+                                                     
                                                         enriched.exam_date = raw.created_at || null;
                                                     } catch (e) { console.error(e); }
 
                                                     setSelectedCandidate(enriched);
                                                     setOpenModal(true);
                                                 }}
-                                                className="p-1.5 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
+                                                className="p-1.5  bg-[#F8F8FF] rounded-lg hover:bg-blue-100 transition-colors"
                                                 aria-label="View Result"
                                             >
                                                 <Eye size={16} className="text-blue-500" />

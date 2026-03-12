@@ -43,21 +43,21 @@ function AppliedJobsTable({
 
                                 return (
                                     <tr key={job._id || index} className="border-t border-gray-50 hover:bg-gray-50/80 transition-colors duration-200">
-                                        <td className="px-6 py-4 text-gray-700 text-sm">
+                                        <td className="px-8 py-4 text-gray-700 text-sm">
                                             {rowIndex + 1}
                                         </td>
-                                        <td className="px-4 py-4">
+                                        <td className="px-2 py-2">
                                             <span className="text-gray-700 text-sm font-medium">
                                                 {job.jobTitle || job?.offerId?.jobTitle || '—'}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-4">
+                                        <td className="px-2 py-2">
                                             <div className="flex items-center gap-1">
                                                 <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                                                 <span className="text-gray-600 text-sm">{job.companyName || '—'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4">
+                                        <td className="px-2 py-2">
                                             <div className="flex items-center gap-1 flex-wrap">
                                                 <span className="flex items-center gap-1 px-3 py-1 bg-[#F6F6FF] text-[#654CB7] rounded-full text-xs border border-purple-100">
                                                     <MapPin className="w-3 h-3" />
@@ -116,7 +116,7 @@ function AppliedJobsTable({
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <span className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize ${getStatusBadgeClass(status)}`}>
+                                            <span className={`px-4 py-1.5 rounded-full text-xs font-semibold capitalize border border-purple-100 ${getStatusBadgeClass(status)}`}>
                                                 {status === 'link_sent' ? 'Invited' : status}
                                             </span>
                                         </td>
