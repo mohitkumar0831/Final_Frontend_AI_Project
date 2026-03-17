@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, Filter, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import ResumeSummary from "./ResumeSummary";
 import { useNavigate, useLocation } from "react-router-dom";
 import { baseUrl } from "../utils/ApiConstants";
@@ -28,6 +28,10 @@ function JDDetails() {
   const [pendingSearchTerm, setPendingSearchTerm] = useState("");
   const [selectedPendingIds, setSelectedPendingIds] = useState(() => new Set());
   const headerCheckboxRef = useRef(null);
+  const [hasAutoFiltered, setHasAutoFiltered] = useState(false);
+
+  // util: ensure id is a valid Mongo ObjectId string
+  const isValidObjectId = (id) => typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
 
   useEffect(() => {
     const fetchCandidateAppliedJDs = async () => {
@@ -58,6 +62,22 @@ function JDDetails() {
 
     fetchCandidateAppliedJDs();
   }, [jdData?._id]);
+
+  useEffect(() => {
+    if (pendingCandidates.length > 0 && !hasAutoFiltered && !isFiltering) {
+      setHasAutoFiltered(true);
+      let allIds = pendingCandidates.map(getPendingSelectableId).filter(id => id);
+      // sanitize ids to valid ObjectId format
+      allIds = allIds.filter(isValidObjectId);
+      console.log("auto-filter: pending ids", allIds);
+      setSelectedPendingIds(new Set(allIds));
+      // Trigger filtering with provided ids
+      handleFilterResumes(allIds).catch(() => {
+        // if something goes wrong we want to retry next time candidates change
+        setHasAutoFiltered(false);
+      });
+    }
+  }, [pendingCandidates, hasAutoFiltered, isFiltering]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -237,8 +257,11 @@ function JDDetails() {
     });
   };
 
-  const handleFilterResumes = async () => {
-    const selectedIds = Array.from(selectedPendingIds);
+  const handleFilterResumes = async (providedIds = null) => {
+    let selectedIds = providedIds || Array.from(selectedPendingIds);
+    // clean by type and format
+    selectedIds = selectedIds.filter(isValidObjectId);
+    console.log("filterResumes called with IDs", selectedIds);
 
     if (selectedIds.length === 0) {
       alert("Please select at least one candidate to filter");
@@ -251,6 +274,7 @@ function JDDetails() {
         return pcId === selectedId;
       });
     });
+    console.log("valid ids after cross-check", validIds);
 
     if (validIds.length === 0) {
       alert("Selected candidates are no longer available for filtering");
@@ -268,9 +292,11 @@ function JDDetails() {
         return;
       }
 
+      const requestBody = validIds.length ? { candidateIds: validIds } : {};
+      console.log("sending filter request", requestBody);
       const response = await axios.post(
         `${baseUrl}/jd/${jdId}/filter-resumes`,
-        { candidateIds: validIds },
+        requestBody,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -378,6 +404,7 @@ function JDDetails() {
         alert(response.data.message || "Filtering failed. Please try again.");
       }
     } catch (error) {
+      console.error("filterResumes error", error.response || error);
       const errorMessage = error.response?.data?.message || "Error filtering resumes. Please try again.";
       alert(errorMessage);
     } finally {
@@ -430,7 +457,7 @@ function JDDetails() {
   const ScoreBadge = ({ score }) => {
     const s = Number(score || 0);
     const deg = Math.max(0, Math.min(100, s)) * 3.6;
-    const color = s >= 50 ? "#166534" : s >= 40 ? "#f59e0b" : "#ef4444";
+    const color = s >= 70 ? "#16a34a" : s >= 40 ? "#f59e0b" : "#ef4444";
 
     return (
       <div className="flex items-center gap-2">
@@ -477,22 +504,10 @@ function JDDetails() {
                 />
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
-
-              <button
-                onClick={handleFilterResumes}
-                disabled={isFiltering || pendingCandidates.length === 0 || selectedPendingIds.size === 0}
-                className={`h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2 text-white
-                  ${isFiltering || pendingCandidates.length === 0 || selectedPendingIds.size === 0
-                    ? "bg-[#5B4BFF]/60 cursor-not-allowed"
-                    : "bg-[#5B4BFF] hover:bg-[#4A3CF0]"}`}
-              >
-                <Filter size={16} className={isFiltering ? "animate-spin" : ""} />
-                {isFiltering ? "Filtering..." : "Filter"}
-              </button>
             </div>
           </div>
 
-          <div className="px-3 pb-2">
+          <div className="px-3 pb-2 relative">
             <div className="border border-[#D7D2FF] rounded-2xl overflow-x-auto">
               <table className="w-full min-w-[900px]">
                 <thead>
@@ -565,11 +580,20 @@ function JDDetails() {
               </table>
             </div>
 
-            <PaginationBar
+            {isFiltering && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-2xl z-10">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#5B4BFF]" />
+                  <p className="text-sm text-gray-600">Filtering resumes...</p>
+                </div>
+              </div>
+            )}
+
+            {!isFiltering && <PaginationBar
               currentPage={currentPageTable1}
               totalPages={totalPagesTable1}
               onPageChange={handlePageChangeTable1}
-            />
+            />}
           </div>
         </div>
 
@@ -651,7 +675,7 @@ function JDDetails() {
                         <td className="py-4 px-4">
                           <button
                             onClick={() => handleViewCandidate(candidate)}
-                            className="w-9 h-9 rounded-lg bg-[#F3F1FF] flex items-center justify-center"
+                            className="w-9 h-9 rounded-full border border-[#D7D2FF] bg-white hover:bg-[#F3F1FF] flex items-center justify-center"
                           >
                             <Eye size={16} className="text-[#5B4BFF]" />
                           </button>

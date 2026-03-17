@@ -1,16 +1,103 @@
 import React, { useEffect, useState } from "react";
 import img from "../../img/Candidate-Dashboard.png"
-import TF from "../../img/TF.png";
-import IF from "../../img/IF.png";
-import TU from "../../img/TU.png";
-import TA from "../../img/TA.png";
-import TAL from "../../img/TAL.png";
-import TFL from "../../img/TFL.png";
-import ISL from "../../img/ISL.png";
+import TF from "../../img/TC1.png";
+import IF from "../../img/TFC1.png";
+import TU from "../../img/TUC1.png";
+import TA from "../../img/TAC1.png";
+import TAL from "../../img/candidate-TA.png";
+import TFL from "../../img/candidate-TC.png";
+import ISL from "../../img/candidate-TF.png";
+import CTU from "../../img/candidate-TU.png";
 import { Bookmark, Briefcase, User2 } from "lucide-react";
 import { baseUrl } from "../../utils/ApiConstants";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import RDbanner from "../../img/banner-image.png";
+
+function DonutCard({ total = 0, filtered = 0, unfiltered = 0 }) {
+    const t = Number(total) || 0;
+    const f = Number(filtered) || 0;
+    const u = Number(unfiltered) || 0;
+
+    const circumference = 2 * Math.PI * 78;
+    const filteredPercent = t ? (f / t) * 100 : 0;
+    const unfilteredPercent = t ? (u / t) * 100 : 0;
+
+    const filteredDash = (filteredPercent / 100) * circumference;
+    const unfilteredDash = (unfilteredPercent / 100) * circumference;
+
+    return (
+        <div className="bg-white rounded-2xl p-5 shadow-[0px_0px_6px_0px_rgba(0,_0,_0,_0.12)] h-full flex flex-col">
+            <h3 className="text-sm sm:text-base font-semibold text-slate-900 mb-4">
+                Candidate Overview
+            </h3>
+
+            <div className="flex items-center justify-center gap-4 flex-1">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48 shrink-0 flex items-center justify-center">
+                    <svg
+                        width="100%"
+                        height="100%"
+                        viewBox="0 0 176 176"
+                        className="absolute inset-0"
+                    >
+                        <defs>
+                            <linearGradient id="filteredGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#c4b5fd" />
+                                <stop offset="50%" stopColor="#8b5cf6" />
+                                <stop offset="100%" stopColor="#7c3aed" />
+                            </linearGradient>
+                        </defs>
+
+                        <circle
+                            cx="88"
+                            cy="88"
+                            r="78"
+                            fill="none"
+                            stroke="#d9d6fe"
+                            strokeWidth="14"
+                        />
+
+                        <circle
+                            cx="88"
+                            cy="88"
+                            r="78"
+                            fill="none"
+                            stroke="url(#filteredGradient)"
+                            strokeWidth="14"
+                            strokeLinecap="round"
+                            strokeDasharray={`${filteredDash} ${circumference}`}
+                            transform="rotate(-90 88 88)"
+                            style={{ transition: "stroke-dasharray 0.5s ease" }}
+                        />
+                    </svg>
+
+                    <div className="relative flex flex-col items-center justify-center text-center">
+                        <div className="text-[10px] sm:text-xs text-gray-500 leading-4">Total Application</div>
+                        <div className="text-2xl sm:text-3xl font-bold text-indigo-700">{t}</div>
+                    </div>
+                </div>
+
+                <div className="space-y-4 sm:space-y-6">
+                    <div className="flex flex-col items-center gap-2 sm:gap-3">
+                        <span className="w-7 sm:w-9 h-2 sm:h-3 rounded-full bg-indigo-500" />
+                        <div className="text-[10px] sm:text-xs text-gray-500 leading-4 text-center">
+                            <p>Filtered</p>
+                            <div className="text-[10px] sm:text-[11px] text-gray-400">Application ({f})</div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-2 sm:gap-3">
+                        <span className="w-7 sm:w-9 h-2 sm:h-3 rounded-full bg-indigo-200" />
+                        <div className="text-[10px] sm:text-xs text-gray-500 leading-4 text-center">
+                            <p>Un-Filtered</p>
+                            <div className="text-[10px] sm:text-[11px] text-gray-400">Application ({u})</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 const CandidateDashboard = () => {
     const [totalJdsCount, setTotalJdsCount] = useState(0);
@@ -39,6 +126,7 @@ const CandidateDashboard = () => {
         aiScores: [],
         averageAiScore: 0
     });
+    const [analyticsFilter, setAnalyticsFilter] = useState("daily");
 
     const extractSalary = (benefits) => {
         if (!benefits || !Array.isArray(benefits) || benefits.length === 0) {
@@ -215,13 +303,14 @@ const CandidateDashboard = () => {
                             allAppsForFilter.push({
                                 ...candidateInApplied,
                                 jobId: job._id,
-                                createdAt: job.createdAt
+                                createdAt: job.createdAt,
+                                jobTitle: job.offerId?.jobTitle || job.keyResponsibilities || job.companyName || "Job"
                             });
 
                             aiScoresList.push({
                                 jobId: job._id,
                                 aiScore: candidateInApplied.aiScore || 0,
-                                jobName: job.companyName || "Job"
+                                jobName: job.offerId?.jobTitle || job.companyName || "Job"
                             });
 
                             const candidateStatus = candidateInApplied.status?.toLowerCase();
@@ -409,78 +498,163 @@ const CandidateDashboard = () => {
         return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
     };
 
-    const generateGraphPoints = () => {
-        const scores = graphData.aiScores;
-        if (scores.length === 0) {
-            return [
-                { x: 0, y: 185 },
-                { x: 60, y: 185 },
-                { x: 120, y: 185 },
-                { x: 180, y: 185 },
-                { x: 240, y: 185 },
-                { x: 300, y: 185 },
-                { x: 340, y: 185 },
-            ];
+    const getFilteredAnalyticsData = () => {
+        const apps = [...allApplicationsData].sort(
+            (a, b) => new Date(a.appliedAt || a.createdAt) - new Date(b.appliedAt || b.createdAt)
+        );
+
+        if (!apps.length) {
+            return {
+                labels: [],
+                fullLabels: [],
+                values: [],
+            };
         }
 
-        const scaleY = (score) => {
-            const minY = 30;
-            const maxY = 185;
-            return maxY - ((score / 100) * (maxY - minY));
-        };
+        if (analyticsFilter === "daily") {
+            const today = new Date();
+            const todayStr = today.toISOString().split("T")[0];
 
-        const xPositions = [0, 60, 120, 180, 240, 300, 340];
-        const points = [];
-
-        for (let i = 0; i < 7; i++) {
-            const score = scores[i] !== undefined ? scores[i] : 0;
-            points.push({
-                x: xPositions[i],
-                y: scaleY(score),
-                score: score,
-                highlight: i === scores.length - 1 && scores.length > 0
+            const todayApps = apps.filter((app) => {
+                const appDate = new Date(app.appliedAt || app.createdAt);
+                return appDate.toISOString().split("T")[0] === todayStr;
             });
+
+            if (todayApps.length === 0) {
+                return {
+                    labels: [],
+                    fullLabels: [],
+                    values: [],
+                };
+            }
+
+            return {
+                labels: todayApps.map((app) => {
+                    const title = app.jobTitle || "Job";
+                    return title.length > 10 ? title.slice(0, 10) + ".." : title;
+                }),
+                fullLabels: todayApps.map((app) => app.jobTitle || "Job"),
+                values: todayApps.map((app) => app.aiScore || 0),
+            };
         }
 
-        return points;
-    };
+        if (analyticsFilter === "monthly") {
+            const grouped = {};
 
-    const generatePath = (points) => {
-        if (points.length === 0) return "";
+            apps.forEach((app) => {
+                const date = new Date(app.appliedAt || app.createdAt);
+                const key = `${date.getFullYear()}-${date.getMonth()}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        label: months[date.getMonth()].slice(0, 3),
+                        total: 0,
+                        count: 0,
+                        sortDate: new Date(date.getFullYear(), date.getMonth(), 1),
+                        jobTitles: [],
+                    };
+                }
+                grouped[key].total += app.aiScore || 0;
+                grouped[key].count += 1;
+                grouped[key].jobTitles.push(app.jobTitle || "Job");
+            });
 
-        let path = `M${points[0].x},${points[0].y}`;
-        for (let i = 1; i < points.length; i++) {
-            const prev = points[i - 1];
-            const curr = points[i];
-            const midX = (prev.x + curr.x) / 2;
-            path += ` Q${midX},${prev.y} ${midX},${(prev.y + curr.y) / 2}`;
-            path += ` T${curr.x},${curr.y}`;
+            const monthlyData = Object.values(grouped)
+                .sort((a, b) => a.sortDate - b.sortDate)
+                .slice(-8);
+
+            return {
+                labels: monthlyData.map((item) => item.label),
+                fullLabels: monthlyData.map(
+                    (item) => `${item.label} (${item.count} jobs)`
+                ),
+                values: monthlyData.map((item) =>
+                    item.count ? Math.round(item.total / item.count) : 0
+                ),
+            };
         }
-        return path;
-    };
 
-    const generateAreaPath = (points) => {
-        if (points.length === 0) return "";
+        if (analyticsFilter === "yearly") {
+            const grouped = {};
 
-        let path = `M${points[0].x},${points[0].y}`;
-        for (let i = 1; i < points.length; i++) {
-            const prev = points[i - 1];
-            const curr = points[i];
-            const midX = (prev.x + curr.x) / 2;
-            path += ` Q${midX},${prev.y} ${midX},${(prev.y + curr.y) / 2}`;
-            path += ` T${curr.x},${curr.y}`;
+            apps.forEach((app) => {
+                const date = new Date(app.appliedAt || app.createdAt);
+                const key = `${date.getFullYear()}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        label: key,
+                        total: 0,
+                        count: 0,
+                        sortDate: new Date(date.getFullYear(), 0, 1),
+                    };
+                }
+                grouped[key].total += app.aiScore || 0;
+                grouped[key].count += 1;
+            });
+
+            const yearlyData = Object.values(grouped)
+                .sort((a, b) => a.sortDate - b.sortDate)
+                .slice(-8);
+
+            return {
+                labels: yearlyData.map((item) => item.label),
+                fullLabels: yearlyData.map(
+                    (item) => `${item.label} (${item.count} jobs)`
+                ),
+                values: yearlyData.map((item) =>
+                    item.count ? Math.round(item.total / item.count) : 0
+                ),
+            };
         }
-        path += ` L${points[points.length - 1].x},185 L${points[0].x},185 Z`;
-        return path;
+
+        return {
+            labels: [],
+            fullLabels: [],
+            values: [],
+        };
+    };
+    const analyticsGraphData = getFilteredAnalyticsData();
+
+    const generateBarPositions = (values) => {
+        const count = values.length || 1;
+        const chartWidth = 600;
+        const chartHeight = 185;
+        const maxBarHeight = 155;
+        const maxBarWidth = 45;
+        const minBarWidth = 20;
+        const minGap = 8;
+
+        const barWidth = Math.max(
+            minBarWidth,
+            Math.min(maxBarWidth, (chartWidth - (count - 1) * minGap) / count - minGap)
+        );
+        const totalBarsWidth = count * barWidth;
+        const totalGap = chartWidth - totalBarsWidth;
+        const gap = count > 1 ? Math.max(minGap, totalGap / (count + 1)) : 0;
+        const startX = gap;
+
+        return values.map((value, index) => {
+            const height = value > 0 ? Math.max((value / 100) * maxBarHeight, 8) : 0;
+            const x = startX + index * (barWidth + gap);
+            const y = chartHeight - height;
+
+            return {
+                x,
+                y,
+                width: barWidth,
+                height,
+                value,
+                index,
+            };
+        });
     };
 
-    const graphPoints = generateGraphPoints();
+    const barData = generateBarPositions(analyticsGraphData.values);
 
     const stats = [
-        { title: "Total Applications", value: jdCounts.totalAppliedJds, img: TA, text: "text-pink-600", line: TAL },
-        { title: "Total Filtered", value: jdCounts.filteredJds, img: TF, text: "text-purple-600", line: TFL },
-        { title: "Total Job Description", value: totalJdsCount, img: IF, text: "text-indigo-600", line: ISL },
-        { title: "Total Unfiltered", value: jdCounts.unfilteredJds, img: TU, text: "text-pink-600", line: TAL },
+        { title: "Total Applications", value: jdCounts.totalAppliedJds, img: TA, text: "text-purple-800", line: TAL },
+        { title: "Total Filtered", value: jdCounts.filteredJds, img: TF, text: "text-pink-500", line: TFL },
+        { title: "Total Job Description", value: totalJdsCount, img: IF, text: "text-blue-500", line: ISL },
+        { title: "Total Unfiltered", value: jdCounts.unfilteredJds, img: TU, text: "text-orange-500", line: CTU },
     ];
 
     const pieSize = 220;
@@ -502,36 +676,92 @@ const CandidateDashboard = () => {
     return (
         <div className="min-h-screen">
             <div className="space-y-4">
-                <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
-                    <div className="relative h-full w-full overflow-hidden rounded-xl sm:rounded-2xl lg:col-span-3">
-                        <img src={img} alt="Dashboard Banner" className="h-full w-full object-cover" />
-                        <div className="absolute inset-0 flex flex-col items-end p-4 sm:p-6 md:p-8">
-                            <p className="mb-1 text-[10px] sm:text-xl text-white/90">
-                                {formatDate(currentDateTime)}
+                <div className="grid gap-4 sm:gap-6 lg:grid-cols-6">
+                    <div className="lg:col-span-4 relative w-full overflow-hidden rounded-xl shadow-sm aspect-[16/6] sm:aspect-[16/5] md:aspect-[16/4] lg:aspect-auto lg:h-full">
+                        <img
+                            src={RDbanner}
+                            alt="Dashboard Banner"
+                            className="w-full h-full "
+                        />
+                        <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 text-[#24174E]">
+                            <p className="text-xs sm:text-sm md:text-base opacity-90 mb-0.5 sm:mb-1">
+                                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                             </p>
-                            <h1 className="text-right text-xl font-bold text-white sm:text-4xl lg:text-5xl">
-                                {getGreeting()}, {getFirstName(user?.name)}!
+                            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-1 sm:mb-2">
+                                {(() => {
+                                    const hour = new Date().getHours();
+                                    if (hour < 12) return "Good Morning";
+                                    if (hour < 18) return "Good Afternoon";
+                                    return "Good Evening";
+                                })()}, {user?.name ? user.name.split(' ')[0] : 'Recruiter'}!
                             </h1>
-                            <p className="mt-1 max-w-[200px] text-right text-[10px] text-white/90 sm:max-w-xs sm:text-sm">
-                                Land your dream job faster, track progress, and celebrate every win
+                            <p className="text-xs sm:text-sm md:text-base opacity-90 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg leading-relaxed hidden sm:block">
+                                Land your dream job faster, track progress,<br className="hidden md:block" />
+                                 and celebrate every win 
+                            </p>
+
+                            <p className="text-sm flex justify-center rounded-lg py-2 bg-gradient-to-r from-[#59459F] to-[#6262BB] w-[150px] mt-6">
+                                <Link to="/Candidate-Dashboard/AllJds" className="text-white">
+                                    Start Applying
+                                </Link>
                             </p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:col-span-2">
-                        {stats.map((stat, index) => (
-                            <div key={index} className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 shadow-sm flex flex-col justify-between">
-                                <div className="flex justify-between items-center gap-2">
-                                    <p className="text-gray-500 text-xs sm:text-sm md:text-base lg:text-lg leading-tight">{stat.title}</p>
-                                    <img src={stat.img} alt="" className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 object-contain flex-shrink-0" />
-                                </div>
-                                <div className="flex justify-between items-center mt-2">
-                                    <h2 className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold ${stat.text}`}>{stat.value}</h2>
-                                    <img src={stat.line} alt="" className="sm:h-6 md:h-6 lg:h-8 w-auto object-contain flex-shrink-0" />
-                                </div>
-                            </div>
-                        ))}
+                    <div className="lg:col-span-2 min-h-[280px] sm:min-h-[300px] md:min-h-[320px]">
+                        <DonutCard
+                            total={jdCounts.totalAppliedJds}
+                            filtered={jdCounts.filteredJds}
+                            unfiltered={jdCounts.unfilteredJds}
+                        />
                     </div>
+                </div>
+
+                <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2">
+                    {stats.map((stat, index) => (
+                        <div
+                            key={index}
+                            className="relative overflow-hidden bg-gradient-to-b from-white to-[#f8f7ff] rounded-[24px] p-4 sm:p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] min-w-[220px] sm:min-w-[240px] md:min-w-[210px] flex-1"
+                        >
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-7 w-7 rounded-xl justify-center shrink-0">
+                                        <img
+                                            src={stat.img}
+                                            alt=""
+                                            className="h-7 w-7 object-contain"
+                                        />
+                                    </div>
+
+                                    <p className="text-[#6b6b6b] text-sm sm:text-base leading-5 font-medium max-w-[100px]">
+                                        {(() => {
+                                            const words = stat.title.split(" ");
+                                            return words.length === 2 ? (
+                                                <>
+                                                    {words[0]} <br />
+                                                    {words[1]}
+                                                </>
+                                            ) : (
+                                                stat.title
+                                            );
+                                        })()}
+                                    </p>
+                                </div>
+
+                                <h2 className={`text-3xl sm:text-4xl font-bold leading-none ${stat.text}`}>
+                                    {stat.value}
+                                </h2>
+                            </div>
+
+                            <div className="mt-4 sm:mt-5">
+                                <img
+                                    src={stat.line}
+                                    alt=""
+                                    className="w-full h-10 sm:h-12 object-cover"
+                                />
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
@@ -579,105 +809,212 @@ const CandidateDashboard = () => {
                     </div>
 
                     <div className="rounded-xl sm:rounded-2xl bg-white p-3 sm:p-4 md:p-5 shadow-sm lg:col-span-3 h-[380px] sm:h-[400px] md:h-[420px] flex flex-col">
-                        <div className="flex items-center justify-between mb-3 sm:mb-4 flex-shrink-0">
-                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-[#11142D] tracking-tight">Jobs Analytics</h2>
-                            <button className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-slate-200 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                                Daily
-                                <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 flex-shrink-0 gap-2">
+                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-[#11142D] tracking-tight">
+                                Jobs Analytics
+                            </h2>
+
+                            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                                <p className="text-[10px] sm:text-xs md:text-sm font-medium text-slate-500">
+                                    Total Jobs Applied{" "}
+                                    <span className="text-[#6C63FF] font-bold">
+                                        {jdCounts.totalAppliedJds}
+                                    </span>
+                                </p>
+
+                                <select
+                                    value={analyticsFilter}
+                                    onChange={(e) => setAnalyticsFilter(e.target.value)}
+                                    className="rounded-full border border-slate-200 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors outline-none"
+                                >
+                                    <option value="daily">Daily</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="flex flex-1 min-h-0 gap-3 sm:gap-4">
-                            <div className="flex-1 min-w-0 overflow-x-auto">
-                                <div className="min-w-[300px] h-full">
-                                    <svg viewBox="0 0 400 220" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+
+                        <div className="flex-1 min-h-0 relative">
+                            <div className="w-full h-full overflow-x-auto overflow-y-hidden">
+                                <div
+                                    className="h-full"
+                                    style={{
+                                        minWidth:
+                                            analyticsGraphData.values.length > 7
+                                                ? `${analyticsGraphData.values.length * 75}px`
+                                                : "100%",
+                                    }}
+                                >
+                                    <svg
+                                        width="100%"
+                                        height="100%"
+                                        viewBox={`0 0 ${Math.max(
+                                            700,
+                                            50 + analyticsGraphData.values.length * 75
+                                        )} 250`}
+                                        preserveAspectRatio="none"
+                                    >
                                         <defs>
-                                            <linearGradient id="gradientArea" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#4C6FFF" stopOpacity="0.2" />
-                                                <stop offset="100%" stopColor="#4C6FFF" stopOpacity="0" />
+                                            <pattern
+                                                id="barPattern"
+                                                patternUnits="userSpaceOnUse"
+                                                width="8"
+                                                height="8"
+                                                patternTransform="rotate(115)"
+                                            >
+                                                <rect width="8" height="8" fill="white" />
+                                                <line
+                                                    x1="0"
+                                                    y1="0"
+                                                    x2="0"
+                                                    y2="8"
+                                                    stroke="#F1F5F9"
+                                                    strokeWidth="4"
+                                                />
+                                            </pattern>
+
+                                            <linearGradient
+                                                id="barGradient"
+                                                x1="0%"
+                                                y1="0%"
+                                                x2="0%"
+                                                y2="100%"
+                                            >
+                                                <stop offset="0%" stopColor="#A78BFA" />
+                                                <stop offset="100%" stopColor="#7C3AED" />
                                             </linearGradient>
                                         </defs>
-                                        {[0, 25, 50, 75, 100].map((val, i) => (
-                                            <text key={i} x="28" y={185 - (i * 38)} fontSize="10" fill="#94A3B8" textAnchor="end" alignmentBaseline="middle">{val}</text>
-                                        ))}
-                                        {[0, 1, 2, 3, 4].map((i) => (
-                                            <line key={i} x1="35" y1={185 - (i * 38)} x2="390" y2={185 - (i * 38)} stroke="#E2E8F0" strokeWidth="0.5" opacity="0.5" />
-                                        ))}
-                                        <g transform="translate(40, 0)">
-                                            <path d={generateAreaPath(graphPoints)} fill="url(#gradientArea)" />
-                                            <path d={generatePath(graphPoints)} fill="none" stroke="#8CA3FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                                            {graphPoints.map((point, i) => (
+
+                                        {[0, 20, 40, 60, 80, 100].map((val, i) => {
+                                            const y = 185 - (val / 100) * 155;
+                                            return (
                                                 <g key={i}>
-                                                    {point.highlight ? (
-                                                        <>
-                                                            <line x1={point.x} y1={point.y} x2={point.x} y2="185" stroke="#8CA3FF" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
-                                                            <g transform={`translate(${point.x}, ${point.y - 25})`}>
-                                                                <rect x="-18" y="-12" width="36" height="22" rx="5" fill="white" stroke="#E2E8F0" strokeWidth="1" />
-                                                                <text x="0" y="3" textAnchor="middle" fontSize="10" fontWeight="600" fill="#4C6FFF">{point.score}</text>
-                                                            </g>
-                                                            <circle cx={point.x} cy={point.y} r="5" fill="white" stroke="#4C6FFF" strokeWidth="2" />
-                                                        </>
-                                                    ) : (
-                                                        <circle cx={point.x} cy={point.y} r="3" fill="#A5B4FC" />
+                                                    <text
+                                                        x="34"
+                                                        y={y + 4}
+                                                        fontSize="11"
+                                                        fill="#A3A3A3"
+                                                        textAnchor="end"
+                                                        fontWeight="500"
+                                                    >
+                                                        {val}
+                                                    </text>
+                                                    <line
+                                                        x1="42"
+                                                        y1={y}
+                                                        x2={Math.max(
+                                                            700,
+                                                            50 +
+                                                            analyticsGraphData.values.length * 75
+                                                        )}
+                                                        y2={y}
+                                                        stroke="#F1F5F9"
+                                                        strokeWidth="1"
+                                                    />
+                                                </g>
+                                            );
+                                        })}
+
+                                        <g transform="translate(50, 0)">
+                                            {barData.map((bar, i) => (
+                                                <g key={i}>
+                                                    <rect
+                                                        x={bar.x}
+                                                        y={30}
+                                                        width={bar.width}
+                                                        height={155}
+                                                        rx="8"
+                                                        ry="8"
+                                                        fill="url(#barPattern)"
+                                                    />
+
+                                                    {bar.height > 0 && (
+                                                        <rect
+                                                            x={bar.x}
+                                                            y={bar.y}
+                                                            width={bar.width}
+                                                            height={bar.height}
+                                                            rx="8"
+                                                            ry="8"
+                                                            fill="url(#barGradient)"
+                                                            className="cursor-pointer transition-all duration-200"
+                                                            onMouseEnter={(e) => {
+                                                                const rect =
+                                                                    e.target.getBoundingClientRect();
+                                                                setTooltipData({
+                                                                    show: true,
+                                                                    x:
+                                                                        rect.left +
+                                                                        rect.width / 2,
+                                                                    y: rect.top,
+                                                                    name: `${analyticsGraphData
+                                                                        .fullLabels?.[i] ||
+                                                                        analyticsGraphData
+                                                                            .labels[i]
+                                                                        } : ${bar.value}%`,
+                                                                });
+                                                            }}
+                                                            onMouseLeave={() =>
+                                                                setTooltipData((prev) => ({
+                                                                    ...prev,
+                                                                    show: false,
+                                                                }))
+                                                            }
+                                                        />
                                                     )}
+
+                                                    {bar.height > 20 && (
+                                                        <text
+                                                            x={bar.x + bar.width / 2}
+                                                            y={bar.y + 16}
+                                                            fontSize="10"
+                                                            fill="white"
+                                                            textAnchor="middle"
+                                                            fontWeight="600"
+                                                        >
+                                                            {bar.value}
+                                                        </text>
+                                                    )}
+
+                                                    <text
+                                                        x={bar.x + bar.width / 2}
+                                                        y="210"
+                                                        fontSize="10"
+                                                        fill="#6B7280"
+                                                        textAnchor="middle"
+                                                        fontWeight="500"
+                                                    >
+                                                        {analyticsGraphData.labels[i]}
+                                                    </text>
                                                 </g>
                                             ))}
                                         </g>
-                                        {graphData.points.length > 0 ? (
-                                            graphData.points.map((job, i) => (
-                                                <text
-                                                    key={i}
-                                                    x={40 + (i * 50) + 10}
-                                                    y="205"
-                                                    fontSize="9"
-                                                    fill="#94A3B8"
-                                                    textAnchor="middle"
-                                                    className="cursor-pointer hover:fill-[#4C6FFF]"
-                                                    onMouseEnter={(e) => {
-                                                        const rect = e.target.getBoundingClientRect();
-                                                        setTooltipData({
-                                                            show: true,
-                                                            x: rect.left + rect.width / 2,
-                                                            y: rect.top,
-                                                            name: job.jobName || `Job ${i + 1}`
-                                                        });
-                                                    }}
-                                                    onMouseLeave={() => setTooltipData({ ...tooltipData, show: false })}
-                                                >
-                                                    JD{i + 1}
-                                                </text>
-                                            ))
-                                        ) : (
-                                            ["JD1", "JD2", "JD3", "JD4", "JD5", "JD6", "JD7"].map((label, i) => (
-                                                <text key={i} x={40 + (i * 50) + 10} y="205" fontSize="9" fill="#94A3B8" textAnchor="middle">{label}</text>
-                                            ))
-                                        )}
                                     </svg>
-                                    {tooltipData.show && (
-                                        <div
-                                            className="fixed z-50 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg shadow-lg pointer-events-none transform -translate-x-1/2"
-                                            style={{
-                                                left: tooltipData.x,
-                                                top: tooltipData.y - 35,
-                                            }}
-                                        >
-                                            <div className="font-medium truncate max-w-[180px]">{tooltipData.name}</div>
-                                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-slate-900 rotate-45"></div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
-                            <div className="flex flex-col justify-center gap-4 sm:gap-6 min-w-[80px] sm:min-w-[100px] lg:min-w-[110px] border-l border-slate-100 pl-3 sm:pl-4 flex-shrink-0">
-                                <div className="text-right">
-                                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-medium text-slate-500 mb-1 leading-tight">Total Jobs<br />Applied</p>
-                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#FF5B99]">{jdCounts.totalAppliedJds}</p>
+
+                            {analyticsGraphData.values.length === 0 && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <p className="text-slate-400 text-sm">
+                                        No analytics data available
+                                    </p>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-medium text-slate-500 mb-1 leading-tight">Average<br />AI Score</p>
-                                    <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#D55AF7]">{graphData.averageAiScore}%</p>
+                            )}
+
+                            {tooltipData.show && (
+                                <div
+                                    className="fixed z-50 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg shadow-xl pointer-events-none transform -translate-x-1/2 max-w-[220px]"
+                                    style={{
+                                        left: tooltipData.x,
+                                        top: tooltipData.y - 40,
+                                    }}
+                                >
+                                    <div className="font-medium truncate">
+                                        {tooltipData.name}
+                                    </div>
+                                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-slate-800 rotate-45"></div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -743,14 +1080,82 @@ const CandidateDashboard = () => {
                         </div>
                         <div className="relative flex justify-center my-6 sm:my-8">
                             <svg width={pieSize} height={pieSize} className="max-w-[200px] sm:max-w-[220px]" viewBox={`0 0 ${pieSize} ${pieSize}`}>
-                                <circle cx={pieCenter} cy={pieCenter} r={outerRadius} stroke="#f3e8ff" strokeWidth={strokeWidth} fill="none" />
-                                <circle cx={pieCenter} cy={pieCenter} r={outerRadius} stroke="#A855F7" strokeWidth={strokeWidth} fill="none" strokeLinecap="round" strokeDasharray={outerCircumference} strokeDashoffset={outerCircumference - (outerPercent / 100) * outerCircumference} transform={`rotate(-90 ${pieCenter} ${pieCenter})`} />
+                                {(() => {
+                                    const cx = pieCenter;
+                                    const cy = pieCenter;
+                                    const r = 78;
+                                    const stroke = 20;
+                                    const cornerRadius = 4;
+                                    const gapDeg = 6;
 
-                                <circle cx={pieCenter} cy={pieCenter} r={middleRadius} stroke="#fef3c7" strokeWidth={strokeWidth} fill="none" />
-                                <circle cx={pieCenter} cy={pieCenter} r={middleRadius} stroke="#F59E0B" strokeWidth={strokeWidth} fill="none" strokeLinecap="round" strokeDasharray={middleCircumference} strokeDashoffset={middleCircumference - (pendingPercent / 100) * middleCircumference} transform={`rotate(-90 ${pieCenter} ${pieCenter})`} />
+                                    const total = applicationDistribution.total || 1;
+                                    const filtered = applicationDistribution.filtered || 0;
+                                    const unfiltered = Math.max(0, total - filtered);
 
-                                <circle cx={pieCenter} cy={pieCenter} r={innerRadius} stroke="#d1fae5" strokeWidth={strokeWidth} fill="none" />
-                                <circle cx={pieCenter} cy={pieCenter} r={innerRadius} stroke="#10B981" strokeWidth={strokeWidth} fill="none" strokeLinecap="round" strokeDasharray={innerCircumference} strokeDashoffset={innerCircumference - (filteredPercent / 100) * innerCircumference} transform={`rotate(-90 ${pieCenter} ${pieCenter})`} />
+                                    const totalGaps = gapDeg * 2;
+                                    const usableDeg = 360 - totalGaps;
+
+                                    const filteredDeg = (filtered / total) * usableDeg;
+                                    const unfilteredDeg = (unfiltered / total) * usableDeg;
+
+                                    const filteredStart = 0;
+                                    const filteredEnd = filteredStart + filteredDeg;
+
+                                    const unfilteredStart = filteredEnd + gapDeg;
+                                    const unfilteredEnd = unfilteredStart + unfilteredDeg;
+
+                                    const polarToCartesian = (cx, cy, r, angle) => {
+                                        const rad = (angle - 90) * Math.PI / 180;
+                                        return {
+                                            x: cx + r * Math.cos(rad),
+                                            y: cy + r * Math.sin(rad),
+                                        };
+                                    };
+
+                                    const describeArc = (cx, cy, r, startAngle, endAngle) => {
+                                        if (endAngle - startAngle < 1) return "";
+                                        const start = polarToCartesian(cx, cy, r, endAngle);
+                                        const end = polarToCartesian(cx, cy, r, startAngle);
+                                        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+                                        return [
+                                            "M", start.x, start.y,
+                                            "A", r, r, 0, largeArcFlag, 0, end.x, end.y
+                                        ].join(" ");
+                                    };
+
+                                    return (
+                                        <>
+                                            <defs>
+                                                <filter id="roundCornersDistribution">
+                                                    <feGaussianBlur in="SourceGraphic" stdDeviation={cornerRadius} result="blur" />
+                                                    <feColorMatrix in="blur" type="matrix"
+                                                        values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"
+                                                        result="round"
+                                                    />
+                                                    <feComposite in="SourceGraphic" in2="round" operator="atop" />
+                                                </filter>
+                                            </defs>
+
+                                            <g filter="url(#roundCornersDistribution)">
+                                                <path
+                                                    d={describeArc(cx, cy, r, filteredStart, filteredEnd)}
+                                                    fill="none"
+                                                    stroke="#6C50D4"
+                                                    strokeWidth={stroke}
+                                                    strokeLinecap="butt"
+                                                />
+
+                                                <path
+                                                    d={describeArc(cx, cy, r, unfilteredStart, unfilteredEnd)}
+                                                    fill="none"
+                                                    stroke="#A58CFF"
+                                                    strokeWidth={stroke}
+                                                    strokeLinecap="butt"
+                                                />
+                                            </g>
+                                        </>
+                                    );
+                                })()}
                             </svg>
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
                                 <p className="text-xs sm:text-sm text-slate-500">Total</p>
@@ -759,19 +1164,18 @@ const CandidateDashboard = () => {
                         </div>
                         <div className="flex flex-wrap justify-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
                             <div className="flex items-center gap-1.5">
-                                <span className="w-3 sm:w-4 h-2 sm:h-2.5 rounded-full bg-purple-500"></span>
                                 <span className="text-slate-600">Total</span>
                                 <span className="font-semibold">{applicationDistribution.total}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="w-3 sm:w-4 h-2 sm:h-2.5 rounded-full bg-amber-500"></span>
-                                <span className="text-slate-600">Pending</span>
-                                <span className="font-semibold">{applicationDistribution.pending}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <span className="w-3 sm:w-4 h-2 sm:h-2.5 rounded-full bg-emerald-500"></span>
+                                <span className="w-3 sm:w-4 h-2 sm:h-2.5 rounded-full" style={{ backgroundColor: '#6C50D4' }}></span>
                                 <span className="text-slate-600">Filtered</span>
                                 <span className="font-semibold">{applicationDistribution.filtered}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-3 sm:w-4 h-2 sm:h-2.5 rounded-full" style={{ backgroundColor: '#A58CFF' }}></span>
+                                <span className="text-slate-600">Unfiltered</span>
+                                <span className="font-semibold">{Math.max(0, applicationDistribution.total - applicationDistribution.filtered)}</span>
                             </div>
                         </div>
                     </div>

@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import img from "../img/cd.png";
-import TF from "../img/TF.png";
-import IF from "../img/IF.png";
-import TU from "../img/TU.png";
-import TA from "../img/TA.png";
-import TAL from "../img/TAL.png";
-import TFL from "../img/TFL.png";
-import ISL from "../img/ISL.png";
-import RDbanner from "../img/RD-banner.png";
+import TF from "../img/RIS.png";
+import IF from "../img/TFC1.png";
+import TU from "../img/TUC1.png";
+import TA from "../img/TAC1.png";
+import TAL from "../img/candidate-TA.png";
+import TFL from "../img/candidate-TC.png";
+import ISL from "../img/candidate-TF.png";
+import CTU from "../img/candidate-TU.png";
+import RDbanner from "../img/banner-image.png";
 
 import axios from "axios";
 import { baseUrl } from "../utils/ApiConstants";
 import IntelligentHiringHero from "./Component/IntelligentHiringAgent";
+import { Link } from "react-router-dom";
+import Pagination from "../components/LandingPage/Pagination";
 
 const RecruiterDashboard = () => {
     const [recentCandidates, setRecentCandidates] = useState([]);
@@ -28,35 +31,38 @@ const RecruiterDashboard = () => {
     const [totalFiltered, setTotalFiltered] = useState(0);
     const [totalUnfiltered, setTotalUnfiltered] = useState(0);
     const [totalApplications, setTotalApplications] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const candidatesPerPage = 8;
 
     const stats = [
         {
             title: "Total Applicants",
             value: totalApplications,
             img: TA,
-            text: "text-pink-600",
+            text: "text-purple-800",
             line: TAL,
         },
         {
             title: "Total Filtered",
             value: totalFiltered,
             img: TF,
-            text: "text-purple-600",
+            text: "text-pink-500",
             line: TFL,
         },
         {
             title: "Total JD Created",
             value: createdJDs.length || 0,
             img: IF,
-            text: "text-indigo-600",
+            text: "text-blue-500",
             line: ISL,
         },
         {
             title: "Total Unfiltered",
             value: totalUnfiltered,
             img: TU,
-            text: "text-pink-600",
-            line: TAL,
+            text: "text-orange-500",
+            line: CTU,
         },
     ];
 
@@ -217,30 +223,30 @@ const RecruiterDashboard = () => {
     }, []);
 
     useEffect(() => {
-        const fetchRecentCandidates = async () => {
+        const fetchAllCandidates = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get(`${baseUrl}/offer/latest-candidates`, {
+                const res = await axios.get(`${baseUrl}/offer/all-candidates-filtered`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
 
+                console.log("All Candidates:", res.data);
+
                 if (res.data.success) {
                     const allCandidates = res.data.data || [];
 
-                    const recent5 = allCandidates.slice(-5);
-                    setRecentCandidates(recent5);
-
+                    setRecentCandidates(allCandidates);
                     setTotalApplications(allCandidates.length);
                     setTotalFiltered(allCandidates.filter(c => c.status === 'filtered').length);
                     setTotalUnfiltered(allCandidates.filter(c => c.status === 'unfiltered').length);
                 }
             } catch (err) {
-                console.error("Error fetching recent candidates:", err);
+                console.error("Error fetching candidates:", err);
             }
         };
-        fetchRecentCandidates();
+        fetchAllCandidates();
     }, []);
 
     const pieData = getPieChartData();
@@ -301,157 +307,256 @@ const RecruiterDashboard = () => {
         );
     };
 
+    const filteredCandidates = recentCandidates.filter(candidate => {
+        const query = searchQuery.toLowerCase();
+        const nameMatch = candidate.name?.toLowerCase().includes(query);
+        const jobTitleMatch = candidate.jobTitle?.toLowerCase().includes(query);
+        return nameMatch || jobTitleMatch;
+    });
+    const totalPages = Math.ceil(filteredCandidates.length / candidatesPerPage);
+    const currentCandidates = useMemo(() => {
+        const startIndex = (currentPage - 1) * candidatesPerPage;
+        const endIndex = startIndex + candidatesPerPage;
+        return filteredCandidates.slice(startIndex, endIndex);
+    }, [filteredCandidates, currentPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
     return (
         <div className="min-h-screen">
-            <div className="relative w-full mb-6 overflow-hidden rounded-xl shadow-sm ">
-                <img
-                    src={RDbanner}
-                    alt="Dashboard Banner"
-                    className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-auto object-cover"
-                />
-                <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 text-white">
-                    <p className="text-xs sm:text-sm md:text-base opacity-90 mb-0.5 sm:mb-1">
-                        {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </p>
-                    <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-1 sm:mb-2">
-                        {(() => {
-                            const hour = new Date().getHours();
-                            if (hour < 12) return "Good Morning";
-                            if (hour < 18) return "Good Afternoon";
-                            return "Good Evening";
-                        })()}, {user?.name ? user.name.split(' ')[0] : 'Recruiter'}!
-                    </h1>
-                    <p className="text-xs sm:text-sm md:text-base opacity-90 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg leading-relaxed hidden sm:block">
-                        Turn hiring chaos into high-fives with <br className="hidden md:block" />
-                        smarter, faster recruiting
-                    </p>
-                </div>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-5 mt-6">
+                <div className="lg:col-span-4 relative w-full overflow-hidden rounded-xl shadow-sm aspect-[16/6] sm:aspect-[16/5] md:aspect-[16/4] lg:aspect-auto lg:h-full">
+                    <img
+                        src={RDbanner}
+                        alt="Dashboard Banner"
+                        className="w-full h-full "
+                    />
+                    <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 text-[#24174E]">
+                        <p className="text-xs sm:text-sm md:text-base opacity-90 mb-0.5 sm:mb-1">
+                            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </p>
+                        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-1 sm:mb-2">
+                            {(() => {
+                                const hour = new Date().getHours();
+                                if (hour < 12) return "Good Morning";
+                                if (hour < 18) return "Good Afternoon";
+                                return "Good Evening";
+                            })()}, {user?.name ? user.name.split(' ')[0] : 'Recruiter'}!
+                        </h1>
+                        <p className="text-xs sm:text-sm md:text-base opacity-90 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg leading-relaxed hidden sm:block">
+                            Turn hiring chaos into high-fives with <br className="hidden md:block" />
+                            smarter, faster recruiting
+                        </p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <div className="flex flex-col gap-5">
-                    {stats.slice(0, 2).map((item, i) => (
-                        <div
-                            key={i}
-                            className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between flex-1"
-                        >
-                            <div className="flex justify-between items-center">
-                                <p className="text-gray-500 text-2xl w-30">{item.title}</p>
-                                <img src={item.img} alt="" />
-                            </div>
-                            <div className="flex justify-between items-center mt-2">
-                                <h2 className={`text-4xl font-bold ${item.text}`}>
-                                    {item.value}
-                                </h2>
-                                <img src={item.line} alt="" className="h-10 object-contain" />
-                            </div>
-                        </div>
-                    ))}
+                        <p className="text-sm flex justify-center rounded-lg py-2 bg-gradient-to-r from-[#59459F] to-[#6262BB] w-[220px] mt-6">
+                            <Link to="/RecruiterAdmin-Dashboard/JD" className="text-white">
+                                See All Job Requisitions
+                            </Link>
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex flex-col gap-5">
-                    {stats.slice(2, 4).map((item, i) => (
-                        <div
-                            key={i}
-                            className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between flex-1"
-                        >
-                            <div className="flex justify-between items-center">
-                                <p className="text-gray-500 text-2xl w-30">{item.title}</p>
-                                <img src={item.img} alt="" />
-                            </div>
-                            <div className="flex justify-between items-center mt-2">
-                                <h2 className={`text-4xl font-bold ${item.text}`}>
-                                    {item.value}
-                                </h2>
-                                <img src={item.line} alt="" className="h-10 object-contain" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div
-                    style={{
-                        width: "100%",
-                        background: "#fff",
-                        borderRadius: 18,
-                        padding: 20,
-                        boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
-                        fontFamily: "Inter, sans-serif",
-                    }}
-                >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <h3 style={{ fontSize: 18, fontWeight: 600 }}>JD Distribution</h3>
+                <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col">
+                    <div className="flex justify-between items-center flex-shrink-0">
+                        <h3 className="text-base sm:text-lg font-semibold">JD Distribution</h3>
                         <select
                             value={pieChartView}
                             onChange={(e) => setPieChartView(e.target.value)}
-                            style={{
-                                border: "1px solid #e5e7eb",
-                                borderRadius: 10,
-                                padding: "6px 14px",
-                                fontSize: 13,
-                                backgroundColor: "#fff",
-                                cursor: "pointer",
-                                outline: "none"
-                            }}
+                            className="border border-gray-200 rounded-lg px-2 sm:px-3 py-1.5 text-xs sm:text-sm bg-white cursor-pointer outline-none"
                         >
                             <option value="total">Total</option>
                             <option value="monthly">This Month</option>
                         </select>
                     </div>
 
-                    <div style={{ position: "relative", display: "flex", justifyContent: "center", margin: "30px 0" }}>
-                        <svg width={pieSize} height={pieSize}>
-                            <circle cx={pieCenter} cy={pieCenter} r={outerRadius} stroke="#fde6ea" strokeWidth={strokeOuter} fill="none" />
-                            <circle
-                                cx={pieCenter}
-                                cy={pieCenter}
-                                r={outerRadius}
-                                stroke="#F7789B"
-                                strokeWidth={strokeOuter}
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeDasharray={outerCircumference}
-                                strokeDashoffset={outerCircumference - (pieData.createdPercent / 100) * outerCircumference}
-                                transform={`rotate(-90 ${pieCenter} ${pieCenter})`}
-                            />
-                            <circle cx={pieCenter} cy={pieCenter} r={innerRadius} stroke="#e9ecff" strokeWidth={strokeInner} fill="none" />
-                            <circle
-                                cx={pieCenter}
-                                cy={pieCenter}
-                                r={innerRadius}
-                                stroke="#5B6CFF"
-                                strokeWidth={strokeInner}
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeDasharray={innerCircumference}
-                                strokeDashoffset={innerCircumference - (pieData.assignedPercent / 100) * innerCircumference}
-                                transform={`rotate(-90 ${pieCenter} ${pieCenter})`}
-                            />
+                    <div className="relative flex justify-center flex-1 items-center min-h-0">
+                        <svg
+                            width="220"
+                            height="220"
+                            viewBox="0 0 220 220"
+                            className="max-w-[180px] sm:max-w-[220px] max-h-[180px] sm:max-h-[220px]"
+                        >
+                            {(() => {
+                                const size = 220;
+                                const cx = 110;
+                                const cy = 110;
+                                const r = 78;
+                                const stroke = 20;
+                                const cornerRadius = 4;
+                                const gapDeg = 6;
+
+                                const polarToCartesian = (cx, cy, r, angle) => {
+                                    const rad = (angle - 90) * Math.PI / 180;
+                                    return {
+                                        x: cx + r * Math.cos(rad),
+                                        y: cy + r * Math.sin(rad),
+                                    };
+                                };
+
+                                const describeArc = (cx, cy, r, startAngle, endAngle) => {
+                                    const start = polarToCartesian(cx, cy, r, endAngle);
+                                    const end = polarToCartesian(cx, cy, r, startAngle);
+                                    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+                                    return [
+                                        "M", start.x, start.y,
+                                        "A", r, r, 0, largeArcFlag, 0, end.x, end.y
+                                    ].join(" ");
+                                };
+
+                                const total = pieData.assignedPercent + pieData.createdPercent || 100;
+                                const usableDeg = 360 - gapDeg * 2;
+                                const firstDeg = (pieData.assignedPercent / total) * usableDeg;
+                                const secondDeg = (pieData.createdPercent / total) * usableDeg;
+
+                                const firstStart = 220;
+                                const firstEnd = firstStart + firstDeg;
+
+                                const secondStart = firstEnd + gapDeg;
+                                const secondEnd = secondStart + secondDeg;
+
+                                const bgStart = secondEnd + gapDeg;
+                                const bgEnd = firstStart + 360;
+
+                                return (
+                                    <>
+                                        <defs>
+                                            <filter id="roundCorners">
+                                                <feGaussianBlur in="SourceGraphic" stdDeviation={cornerRadius} result="blur" />
+                                                <feColorMatrix in="blur" type="matrix"
+                                                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"
+                                                    result="round"
+                                                />
+                                                <feComposite in="SourceGraphic" in2="round" operator="atop" />
+                                            </filter>
+                                        </defs>
+                                        <g filter="url(#roundCorners)">
+                                            <path
+                                                d={describeArc(cx, cy, r, bgStart, bgEnd)}
+                                                fill="none"
+                                                stroke="#F5F5F7"
+                                                strokeWidth={stroke}
+                                                strokeLinecap="butt"
+                                            />
+                                            <path
+                                                d={describeArc(cx, cy, r, firstStart, firstEnd)}
+                                                fill="none"
+                                                stroke="#6C4DD9"
+                                                strokeWidth={stroke}
+                                                strokeLinecap="butt"
+                                            />
+                                            <path
+                                                d={describeArc(cx, cy, r, secondStart, secondEnd)}
+                                                fill="none"
+                                                stroke="#F451A6"
+                                                strokeWidth={stroke}
+                                                strokeLinecap="butt"
+                                            />
+                                        </g>
+                                    </>
+                                );
+                            })()}
                         </svg>
-                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
-                            <div style={{ fontSize: 14, color: "#6b7280" }}>
-                                {pieChartView === 'monthly' ? 'This Month' : 'Total JD'}
+
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                            <div className="text-sm sm:text-base text-gray-500">
+                                {pieChartView === 'monthly' ? 'This Month' : 'Total Applied'}
                             </div>
-                            <div style={{ fontSize: 28, fontWeight: 700 }}>{pieData.total}</div>
+                            <div className="text-3xl sm:text-4xl font-bold text-[#2B1B68]">
+                                {pieData.total}
+                            </div>
                         </div>
                     </div>
 
-                    <div style={{ display: "flex", justifyContent: "center", gap: 30, fontSize: 14 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span className="w-8 h-3 rounded-full bg-indigo-400"></span>
-
-                            Others <b>{pieData.assignedPercent}%</b>
+                    <div className="flex justify-center gap-4 sm:gap-6 text-xs sm:text-sm flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                            <span className="w-6 sm:w-8 h-2 sm:h-3 rounded-full bg-indigo-400"></span>
+                            <span>Others <b>{pieData.assignedPercent}%</b></span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span className="w-8 h-3 rounded-full bg-rose-400"></span>
-                            {user?.name || 'User'} <b>{pieData.createdPercent}%</b>
+                        <div className="flex items-center gap-2">
+                            <span className="w-6 sm:w-8 h-2 sm:h-3 rounded-full bg-rose-400"></span>
+                            <span>{user?.name || 'User'} <b>{pieData.createdPercent}%</b></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mt-6">
-                <div className="lg:col-span-3 bg-white rounded-xl p-6 shadow-sm h-[320px]">
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 mt-6">
+                {stats.map((stat, index) => (
+                    <div
+                        key={index}
+                        className="relative overflow-hidden bg-gradient-to-b from-white to-[#f8f7ff] rounded-[24px] p-4 sm:p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] min-w-[220px] sm:min-w-[240px] md:min-w-[210px] flex-1"
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="h-7 w-7 rounded-xl justify-center shrink-0">
+                                    <img
+                                        src={stat.img}
+                                        alt=""
+                                        className="h-7 w-7 object-contain"
+                                    />
+                                </div>
+                                <p className="text-[#6b6b6b] text-sm sm:text-base leading-5 font-medium max-w-[100px]">
+                                    {(() => {
+                                        const words = stat.title.split(" ");
+                                        return words.length === 2 ? (
+                                            <>
+                                                {words[0]} <br />
+                                                {words[1]}
+                                            </>
+                                        ) : (
+                                            stat.title
+                                        );
+                                    })()}
+                                </p>
+                            </div>
+                            <h2 className={`text-3xl sm:text-4xl font-bold leading-none ${stat.text}`}>
+                                {stat.value}
+                            </h2>
+                        </div>
+                        <div className="mt-4 sm:mt-5">
+                            <img
+                                src={stat.line}
+                                alt=""
+                                className="w-full h-10 sm:h-12 object-cover"
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 mt-6">
+                <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm h-[320px] flex flex-col">
+                    <h3 className="text-lg font-semibold mb-4">Calendar</h3>
+                    <div className="overflow-x-auto overflow-y-auto pb-2 flex-1">
+                        <div className="min-w-[500px]">
+                            {todayJDs.length > 0 && (
+                                <div className="mb-4">
+                                    <h4 className="text-gray-400 text-sm mb-3">Today</h4>
+                                    {todayJDs.map((jd, index) => renderJDItem(jd, index, true))}
+                                </div>
+                            )}
+                            <div>
+                                <h4 className="text-gray-400 text-sm mb-3">Upcoming</h4>
+                                {upcomingJDs.length > 0 ? (
+                                    upcomingJDs.map((jd, index) => renderJDItem(jd, index))
+                                ) : (
+                                    <div className="text-gray-400 text-sm italic py-2">No upcoming JDs</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm h-[320px]">
                     <div className="flex flex-wrap justify-between items-center mb-6">
                         <div className="flex items-center gap-3">
                             <h3 className="text-lg font-semibold">Requisition Overview</h3>
@@ -493,11 +598,11 @@ const RecruiterDashboard = () => {
 
                             <div className="flex-1 relative h-48">
                                 <div className="absolute inset-0 w-full h-full pointer-events-none">
-                                    <div className="absolute bottom-0 w-full border-b border-gray-100"></div>   {/* 0% Line */}
-                                    <div className="absolute bottom-[25%] w-full border-b border-gray-100"></div> {/* 25% Line */}
-                                    <div className="absolute bottom-[50%] w-full border-b border-gray-100"></div> {/* 50% Line */}
-                                    <div className="absolute bottom-[75%] w-full border-b border-gray-100"></div> {/* 75% Line */}
-                                    <div className="absolute top-0 w-full border-b border-gray-100"></div>        {/* 100% Line */}
+                                    <div className="absolute bottom-0 w-full border-b border-gray-100"></div>
+                                    <div className="absolute bottom-[25%] w-full border-b border-gray-100"></div>
+                                    <div className="absolute bottom-[50%] w-full border-b border-gray-100"></div>
+                                    <div className="absolute bottom-[75%] w-full border-b border-gray-100"></div>
+                                    <div className="absolute top-0 w-full border-b border-gray-100"></div>
                                 </div>
 
                                 <div className="flex items-end justify-between h-full relative z-10 px-2">
@@ -520,7 +625,6 @@ const RecruiterDashboard = () => {
                                                 onMouseEnter={() => setHoveredBar(i)}
                                                 onMouseLeave={() => setHoveredBar(null)}
                                             >
-                                                {/* Tooltip */}
                                                 {isHovered && (
                                                     <div className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 z-20 shadow-lg whitespace-nowrap">
                                                         <div className="font-semibold mb-1">{item.month} {selectedYear}</div>
@@ -530,7 +634,7 @@ const RecruiterDashboard = () => {
                                                     </div>
                                                 )}
 
-                                                <div className="flex items-end gap-1 justify-center w-full h-full pb-[1px]"> {/* pb-1px aligns bar to 0 line visually */}
+                                                <div className="flex items-end gap-1 justify-center w-full h-full pb-[1px]">
                                                     <div
                                                         style={{ height: `${assignedHeight}%` }}
                                                         className={`w-3 md:w-4 rounded-t-md transition-all duration-300 ${isHovered ? 'bg-indigo-500' : 'bg-indigo-400'}`}
@@ -553,121 +657,143 @@ const RecruiterDashboard = () => {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm h-[320px] flex flex-col">
-                    <h3 className="text-lg font-semibold mb-4">Calendar</h3>
-                    <div className="overflow-x-auto overflow-y-auto pb-2 flex-1">
-                        <div className="min-w-[500px]">
-                            {todayJDs.length > 0 && (
-                                <div className="mb-4">
-                                    <h4 className="text-gray-400 text-sm mb-3">Today</h4>
-                                    {todayJDs.map((jd, index) => renderJDItem(jd, index, true))}
-                                </div>
-                            )}
-                            <div>
-                                <h4 className="text-gray-400 text-sm mb-3">Upcoming</h4>
-                                {upcomingJDs.length > 0 ? (
-                                    upcomingJDs.map((jd, index) => renderJDItem(jd, index))
-                                ) : (
-                                    <div className="text-gray-400 text-sm italic py-2">No upcoming JDs</div>
-                                )}
-                            </div>
+            <div className="flex-1 min-w-0 mt-6 overflow-hidden">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 pt-4">
+                    <h3 className="text-xl font-semibold">Candidates</h3>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="relative flex-1 sm:flex-none">
+                            <input
+                                type="text"
+                                placeholder="Search by name or job title..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full sm:w-64 md:w-80 pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                            <svg
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                            </svg>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="flex flex-col lg:flex-row gap-6 mt-8">
-                <div className="flex-shrink-0 mx-auto">
-                    <IntelligentHiringHero />
-                </div>
+                <div className="overflow-x-auto mt-4 bg-white shadow-sm rounded-[18px]">
+                    <table className="w-full min-w-[900px] border-collapse text-sm">
+                        <thead>
+                            <tr className="bg-[#F4F4FF] text-[#1F1F1F]">
+                                <th className="py-4 px-4 text-left font-semibold">Serial No.</th>
+                                <th className="py-4 px-4 text-left font-semibold">Name</th>
+                                <th className="py-4 px-4 text-left font-semibold">Phone No.</th>
+                                <th className="py-4 px-4 text-left font-semibold">Job Title</th>
+                                <th className="py-4 px-4 text-left font-semibold">Skill</th>
+                                <th className="py-4 px-4 text-left font-semibold">Status</th>
+                            </tr>
+                        </thead>
 
-                <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm p-4 overflow-hidden">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold">Candidates</h3>
-                        <button className="text-indigo-500 text-sm hover:underline">View All</button>
-                    </div>
+                        <tbody>
+                            {currentCandidates.length > 0 ? (
+                                currentCandidates.map((item, i) => {
+                                    const serialNo = (currentPage - 1) * candidatesPerPage + i + 1;
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm min-w-[900px] table-auto border-collapse">
-                            <thead>
-                                <tr className="text-left text-gray-500 border-b">
-                                    <th className="py-3 px-4">Name</th>
-                                    <th className="py-3 px-4">Phone No.</th>
-                                    <th className="py-3 px-4">Job Title</th>
-                                    <th className="py-3 px-4">Skills</th>
-                                    <th className="py-3 px-4">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {recentCandidates.length > 0 ? (
-                                    recentCandidates.map((item, i) => (
-                                        <tr key={item.candidateId + i} className="hover:bg-gray-50">
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 ${i % 2 === 0 ? "bg-pink-400" : "bg-indigo-400"}`}>
-                                                        {item.name?.split(" ").map(n => n[0]).join("") || "?"}
-                                                    </div>
-                                                    <span className="whitespace-nowrap">{item.name || "N/A"}</span>
-                                                </div>
+                                    const allSkills =
+                                        item.skills && item.skills.length > 0
+                                            ? item.skills.flatMap((skill) =>
+                                                typeof skill === "string"
+                                                    ? skill
+                                                        .split(",")
+                                                        .map((s) => s.trim())
+                                                        .filter((s) => s.length > 0)
+                                                    : [skill]
+                                            )
+                                            : [];
+
+                                    return (
+                                        <tr key={item.candidateId + i} className="border-b border-[#F0F0F0]">
+                                            <td className="py-4 px-4 text-[#222]">{serialNo}.</td>
+
+                                            <td className="py-4 px-4 text-[#222] whitespace-nowrap">
+                                                {item.name || "N/A"}
                                             </td>
-                                            <td className="py-3 px-4 whitespace-nowrap">{item.phone || "N/A"}</td>
-                                            <td className="py-3 px-4 whitespace-nowrap">{item.jobTitle || "N/A"}</td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {item.skills && item.skills.length > 0 ? (
-                                                        (() => {
-                                                            const allSkills = item.skills
-                                                                .flatMap(skill =>
-                                                                    typeof skill === 'string'
-                                                                        ? skill.split(',').map(s => s.trim()).filter(s => s.length > 0)
-                                                                        : [skill]
-                                                                );
 
-                                                            return (
-                                                                <>
-                                                                    {allSkills.slice(0, 3).map((skill, idx) => (
-                                                                        <span
-                                                                            key={idx}
-                                                                            className={`px-2 py-0.5 rounded-full text-xs ${i % 2 === 0 ? "bg-pink-100 text-pink-600" : "bg-indigo-100 text-indigo-600"}`}
-                                                                        >
-                                                                            {skill}
-                                                                        </span>
-                                                                    ))}
-                                                                    {allSkills.length > 3 && (
-                                                                        <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
-                                                                            +{allSkills.length - 3}
-                                                                        </span>
-                                                                    )}
-                                                                </>
-                                                            );
-                                                        })()
+                                            <td className="py-4 px-4 text-[#222] whitespace-nowrap">
+                                                {item.phone || "N/A"}
+                                            </td>
+
+                                            <td className="py-4 px-4 text-[#222] whitespace-nowrap">
+                                                {item.jobTitle || "N/A"}
+                                            </td>
+
+                                            <td className="py-4 px-4">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {allSkills.length > 0 ? (
+                                                        <>
+                                                            {allSkills.slice(0, 3).map((skill, idx) => (
+                                                                <span
+                                                                    key={idx}
+                                                                    className="px-3 py-1 rounded-full text-xs bg-[#F3F3F3] text-[#444]"
+                                                                >
+                                                                    {skill}
+                                                                </span>
+                                                            ))}
+                                                            {allSkills.length > 3 && (
+                                                                <span className="px-3 py-1 rounded-full text-xs bg-[#F3F3F3] text-[#444]">
+                                                                    +{allSkills.length - 3}
+                                                                </span>
+                                                            )}
+                                                        </>
                                                     ) : (
                                                         <span className="text-gray-400">No skills</span>
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2 whitespace-nowrap">
-                                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.status === "filtered" ? "bg-green-500" : "bg-red-500"}`}></span>
-                                                    <span className={`capitalize ${item.status === "filtered" ? "text-green-600" : "text-red-500"}`}>
-                                                        {item.status || "Unknown"}
-                                                    </span>
-                                                </div>
+
+                                            <td className="py-4 px-4">
+                                                <span
+                                                    className={`inline-flex items-center justify-center min-w-[92px] px-4 py-1.5 rounded-full text-xs font-medium ${item.status?.toLowerCase() === "filtered"
+                                                        ? "bg-[#F1FBEA] text-[#22C55E]"
+                                                        : "bg-[#FFF1F1] text-[#FF3B30]"
+                                                        }`}
+                                                >
+                                                    {item.status?.toLowerCase() === "filtered"
+                                                        ? "Filtered"
+                                                        : "Unfiltered"}
+                                                </span>
                                             </td>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="5" className="py-8 text-center text-gray-400">
-                                            No recent candidates found
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" className="py-8 text-center text-gray-400">
+                                        {searchQuery
+                                            ? "No candidates match your search"
+                                            : "No recent candidates found"}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
+
+            </div>
+            <div className="py-4">
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                />
             </div>
         </div>
     );
