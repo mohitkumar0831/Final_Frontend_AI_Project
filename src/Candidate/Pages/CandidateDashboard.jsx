@@ -764,13 +764,16 @@ const CandidateDashboard = () => {
                     ))}
                 </div>
 
+
+                {/* //Jobs Analytics */}
+
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
                     <div className="rounded-xl sm:rounded-2xl bg-white p-4 sm:p-5 shadow-sm lg:col-span-2 h-[380px] sm:h-[400px] md:h-[420px] flex flex-col">
                         <div className="flex items-center justify-between mb-3 sm:mb-4 flex-shrink-0">
                             <h2 className="text-sm sm:text-base font-semibold text-slate-900">Application Status</h2>
                             <Link to="/Candidate-Dashboard/AppliedJD" className="text-xs sm:text-sm font-medium text-indigo-500 hover:underline">View All</Link>
                         </div>
-                        <div className="flex-1 overflow-x-auto overflow-y-auto pr-1 sm:pr-2">
+                        <div className="flex-1 overflow-x-auto overflow-y-auto pr-1 sm:pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             <div className="space-y-3 sm:space-y-4 min-w-[400px]">
                                 {applicationStatus.length > 0 ? (
                                     applicationStatus.map((app) => (
@@ -834,14 +837,14 @@ const CandidateDashboard = () => {
                             </div>
                         </div>
 
-                        <div className="flex-1 min-h-0 relative">
-                            <div className="w-full h-full overflow-x-auto overflow-y-hidden">
+                        <div className="flex-1 min-h-0 relative mt-2">
+                            <div className="w-full h-full overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 <div
                                     className="h-full"
                                     style={{
                                         minWidth:
                                             analyticsGraphData.values.length > 7
-                                                ? `${analyticsGraphData.values.length * 75}px`
+                                                ? `${analyticsGraphData.values.length * 85}px`
                                                 : "100%",
                                     }}
                                 >
@@ -850,144 +853,135 @@ const CandidateDashboard = () => {
                                         height="100%"
                                         viewBox={`0 0 ${Math.max(
                                             700,
-                                            50 + analyticsGraphData.values.length * 75
-                                        )} 250`}
+                                            50 + analyticsGraphData.values.length * 85
+                                        )} 260`}
                                         preserveAspectRatio="none"
                                     >
                                         <defs>
-                                            <pattern
-                                                id="barPattern"
-                                                patternUnits="userSpaceOnUse"
-                                                width="8"
-                                                height="8"
-                                                patternTransform="rotate(115)"
-                                            >
-                                                <rect width="8" height="8" fill="white" />
-                                                <line
-                                                    x1="0"
-                                                    y1="0"
-                                                    x2="0"
-                                                    y2="8"
-                                                    stroke="#F1F5F9"
-                                                    strokeWidth="4"
-                                                />
-                                            </pattern>
-
-                                            <linearGradient
-                                                id="barGradient"
-                                                x1="0%"
-                                                y1="0%"
-                                                x2="0%"
-                                                y2="100%"
-                                            >
+                                            <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stopColor="#818CF8" />
+                                                <stop offset="100%" stopColor="#4F46E5" />
+                                            </linearGradient>
+                                            
+                                            <linearGradient id="barGradientHover" x1="0%" y1="0%" x2="0%" y2="100%">
                                                 <stop offset="0%" stopColor="#A78BFA" />
                                                 <stop offset="100%" stopColor="#7C3AED" />
                                             </linearGradient>
+
+                                            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                                <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#4F46E5" floodOpacity="0.25" />
+                                            </filter>
                                         </defs>
 
                                         {[0, 20, 40, 60, 80, 100].map((val, i) => {
-                                            const y = 185 - (val / 100) * 155;
+                                            const y = 200 - (val / 100) * 160;
                                             return (
                                                 <g key={i}>
                                                     <text
                                                         x="34"
                                                         y={y + 4}
                                                         fontSize="11"
-                                                        fill="#A3A3A3"
+                                                        fill="#94A3B8"
                                                         textAnchor="end"
-                                                        fontWeight="500"
+                                                        fontWeight="600"
                                                     >
                                                         {val}
                                                     </text>
                                                     <line
-                                                        x1="42"
+                                                        x1="45"
                                                         y1={y}
                                                         x2={Math.max(
                                                             700,
-                                                            50 +
-                                                            analyticsGraphData.values.length * 75
+                                                            60 + analyticsGraphData.values.length * 85
                                                         )}
                                                         y2={y}
                                                         stroke="#F1F5F9"
-                                                        strokeWidth="1"
+                                                        strokeWidth="1.5"
+                                                        strokeDasharray="4 4"
                                                     />
                                                 </g>
                                             );
                                         })}
 
-                                        <g transform="translate(50, 0)">
-                                            {barData.map((bar, i) => (
-                                                <g key={i}>
-                                                    <rect
-                                                        x={bar.x}
-                                                        y={30}
-                                                        width={bar.width}
-                                                        height={155}
-                                                        rx="8"
-                                                        ry="8"
-                                                        fill="url(#barPattern)"
-                                                    />
+                                        <g transform="translate(60, 0)">
+                                            {barData.map((bar, i) => {
+                                                const scaledHeight = bar.value > 0 ? Math.max((bar.value / 100) * 160, 8) : 0;
+                                                const scaledY = 200 - scaledHeight;
+                                                const hoverIndex = tooltipData.show && tooltipData.index === i;
 
-                                                    {bar.height > 0 && (
+                                                return (
+                                                    <g key={i}>
+                                                        {/* Background Track */}
                                                         <rect
                                                             x={bar.x}
-                                                            y={bar.y}
+                                                            y={40}
                                                             width={bar.width}
-                                                            height={bar.height}
+                                                            height={160}
                                                             rx="8"
                                                             ry="8"
-                                                            fill="url(#barGradient)"
-                                                            className="cursor-pointer transition-all duration-200"
-                                                            onMouseEnter={(e) => {
-                                                                const rect =
-                                                                    e.target.getBoundingClientRect();
-                                                                setTooltipData({
-                                                                    show: true,
-                                                                    x:
-                                                                        rect.left +
-                                                                        rect.width / 2,
-                                                                    y: rect.top,
-                                                                    name: `${analyticsGraphData
-                                                                        .fullLabels?.[i] ||
-                                                                        analyticsGraphData
-                                                                            .labels[i]
-                                                                        } : ${bar.value}%`,
-                                                                });
-                                                            }}
-                                                            onMouseLeave={() =>
-                                                                setTooltipData((prev) => ({
-                                                                    ...prev,
-                                                                    show: false,
-                                                                }))
-                                                            }
+                                                            fill="#F8FAFC"
                                                         />
-                                                    )}
 
-                                                    {bar.height > 20 && (
+                                                        {scaledHeight > 0 && (
+                                                            <rect
+                                                                x={bar.x}
+                                                                y={scaledY}
+                                                                width={bar.width}
+                                                                height={scaledHeight}
+                                                                rx="8"
+                                                                ry="8"
+                                                                fill={hoverIndex ? "url(#barGradientHover)" : "url(#barGradient)"}
+                                                                filter={hoverIndex ? "url(#shadow)" : ""}
+                                                                className="cursor-pointer transition-all duration-300 transform-origin-bottom"
+                                                                style={{ transformOrigin: `${bar.x + bar.width / 2}px ${scaledY + scaledHeight}px`, transform: hoverIndex ? 'scaleY(1.02)' : 'scaleY(1)' }}
+                                                                onMouseEnter={(e) => {
+                                                                    const rect = e.target.getBoundingClientRect();
+                                                                    setTooltipData({
+                                                                        show: true,
+                                                                        index: i,
+                                                                        x: rect.left + rect.width / 2,
+                                                                        y: rect.top,
+                                                                        label: analyticsGraphData.fullLabels?.[i] || analyticsGraphData.labels[i],
+                                                                        value: bar.value,
+                                                                    });
+                                                                }}
+                                                                onMouseLeave={() =>
+                                                                    setTooltipData((prev) => ({
+                                                                        ...prev,
+                                                                        show: false,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        )}
+
+                                                        {scaledHeight > 25 && (
+                                                            <text
+                                                                x={bar.x + bar.width / 2}
+                                                                y={scaledY + 18}
+                                                                fontSize="10"
+                                                                fill="white"
+                                                                textAnchor="middle"
+                                                                fontWeight="600"
+                                                                className="pointer-events-none"
+                                                            >
+                                                                {bar.value}%
+                                                            </text>
+                                                        )}
+
                                                         <text
                                                             x={bar.x + bar.width / 2}
-                                                            y={bar.y + 16}
-                                                            fontSize="10"
-                                                            fill="white"
+                                                            y="225"
+                                                            fontSize="11"
+                                                            fill={hoverIndex ? "#4F46E5" : "#64748B"}
                                                             textAnchor="middle"
                                                             fontWeight="600"
+                                                            className="transition-colors duration-300 pointer-events-none"
                                                         >
-                                                            {bar.value}
+                                                            {analyticsGraphData.labels[i]}
                                                         </text>
-                                                    )}
-
-                                                    <text
-                                                        x={bar.x + bar.width / 2}
-                                                        y="210"
-                                                        fontSize="10"
-                                                        fill="#6B7280"
-                                                        textAnchor="middle"
-                                                        fontWeight="500"
-                                                    >
-                                                        {analyticsGraphData.labels[i]}
-                                                    </text>
-                                                </g>
-                                            ))}
+                                                    </g>
+                                                );
+                                            })}
                                         </g>
                                     </svg>
                                 </div>
@@ -995,24 +989,33 @@ const CandidateDashboard = () => {
 
                             {analyticsGraphData.values.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <p className="text-slate-400 text-sm">
-                                        No analytics data available
-                                    </p>
+                                    <div className="bg-slate-50 border border-slate-100 rounded-xl px-6 py-4 flex flex-col items-center gap-2">
+                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                            <svg className="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-slate-500 text-sm font-medium">No analytics data available</p>
+                                    </div>
                                 </div>
                             )}
 
                             {tooltipData.show && (
                                 <div
-                                    className="fixed z-50 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg shadow-xl pointer-events-none transform -translate-x-1/2 max-w-[220px]"
+                                    className="fixed z-50 px-4 py-3 bg-white/95 backdrop-blur-md text-slate-800 text-xs rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 pointer-events-none transform -translate-x-1/2 min-w-[140px] transition-all duration-200"
                                     style={{
                                         left: tooltipData.x,
-                                        top: tooltipData.y - 40,
+                                        top: tooltipData.y - 70,
                                     }}
                                 >
-                                    <div className="font-medium truncate">
-                                        {tooltipData.name}
+                                    <div className="font-semibold mb-2 text-slate-900 border-b border-slate-100 pb-1.5 break-words max-w-[200px]">
+                                        {tooltipData.label}
                                     </div>
-                                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-slate-800 rotate-45"></div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+                                        <span className="font-bold text-indigo-600 text-[13px]">Score: {tooltipData.value}%</span>
+                                    </div>
+                                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-4 h-4 bg-white/95 border-b border-r border-slate-100 rotate-45 shadow-[4px_4px_4px_rgba(0,0,0,0.02)]"></div>
                                 </div>
                             )}
                         </div>
@@ -1185,7 +1188,7 @@ const CandidateDashboard = () => {
                             <h2 className="text-sm sm:text-base font-semibold">Job Recommendations</h2>
                             <Link to="/Candidate-Dashboard/Alljds" className="text-[10px] sm:text-xs font-medium text-indigo-500 hover:underline">View All</Link>
                         </div>
-                        <div className="overflow-x-auto overflow-y-auto -mx-4 sm:-mx-5 px-4 sm:px-5 flex-1">
+                        <div className="overflow-x-auto overflow-y-auto -mx-4 sm:-mx-5 px-4 sm:px-5 flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             <div className="space-y-3 sm:space-y-4 min-w-[520px]">
                                 {latestFiveJds.length > 0 ? (
                                     latestFiveJds.map((job, index) => {

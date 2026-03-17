@@ -534,9 +534,11 @@ const RecruiterDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 mt-6">
+               
                 <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm h-[320px] flex flex-col">
+                     {/* Calendar */}
                     <h3 className="text-lg font-semibold mb-4">Calendar</h3>
-                    <div className="overflow-x-auto overflow-y-auto pb-2 flex-1">
+                    <div className="overflow-x-auto overflow-y-auto pb-2 flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         <div className="min-w-[500px]">
                             {todayJDs.length > 0 && (
                                 <div className="mb-4">
@@ -555,8 +557,8 @@ const RecruiterDashboard = () => {
                         </div>
                     </div>
                 </div>
-
-                <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm h-[320px]">
+                {/* Requisition Overview */}
+                <div className="lg:col-span-2 rounded-xl p-6 shadow-sm h-[320px] ">
                     <div className="flex flex-wrap justify-between items-center mb-6">
                         <div className="flex items-center gap-3">
                             <h3 className="text-lg font-semibold">Requisition Overview</h3>
@@ -586,7 +588,7 @@ const RecruiterDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         <div className="flex min-w-[650px]">
                             <div className="flex flex-col justify-between h-48 pr-3 text-right text-xs text-gray-400 font-medium">
                                 <span className="-mt-2">100</span>
@@ -621,7 +623,7 @@ const RecruiterDashboard = () => {
                                         return (
                                             <div
                                                 key={i}
-                                                className="flex flex-col items-center gap-2 flex-1 h-full relative cursor-pointer group"
+                                                className="flex flex-col items-center gap-2 flex-1 h-full relative cursor-pointer group "
                                                 onMouseEnter={() => setHoveredBar(i)}
                                                 onMouseLeave={() => setHoveredBar(null)}
                                             >
@@ -788,6 +790,8 @@ const RecruiterDashboard = () => {
                 </div>
 
             </div>
+
+            {/* Pagination */}
             <div className="py-4">
                 <Pagination
                     currentPage={currentPage}
