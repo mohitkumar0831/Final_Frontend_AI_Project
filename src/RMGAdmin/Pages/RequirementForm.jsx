@@ -109,6 +109,10 @@ function RequirementForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [skillSuggestions, setSkillSuggestions] = useState([]);
+  const [skillSuggestionsLoading, setSkillSuggestionsLoading] = useState(false);
+  const [skillSuggestionsError, setSkillSuggestionsError] = useState('');
+
   useEffect(() => {
     fetchHRUsers();
   }, []);
@@ -141,6 +145,62 @@ function RequirementForm() {
 
   const handleStringField = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const addSuggestedSkill = (skill) => {
+    const trimmed = String(skill).trim();
+    if (!trimmed) return;
+    const current = (formData.skills || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const exists = current.some((s) => s.toLowerCase() === trimmed.toLowerCase());
+    if (exists) return;
+    handleStringField('skills', [...current, trimmed].join(', '));
+  };
+
+  const fetchSkillSuggestions = async () => {
+    if (!formData.jobTitle.trim()) {
+      setSkillSuggestionsError('Enter a job title first, then load AI skills.');
+      return;
+    }
+    setSkillSuggestionsError('');
+    setSkillSuggestionsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${baseUrl}/offer/suggest-skills`,
+        {
+          jobTitle: formData.jobTitle,
+          description: formData.description,
+          employmentType: formData.employmentType,
+          experience: formData.experience,
+          workMode: formData.workMode,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data?.success && Array.isArray(response.data.skills)) {
+        setSkillSuggestions(response.data.skills);
+        if (response.data.skills.length === 0) {
+          setSkillSuggestionsError('No skills returned. Add more description and try again.');
+        } else {
+          setSkillSuggestionsError('');
+        }
+      } else {
+        setSkillSuggestions([]);
+        setSkillSuggestionsError('No suggestions returned.');
+      }
+    } catch (err) {
+      console.error('AI skill suggestions:', err.response?.data || err);
+      setSkillSuggestions([]);
+      setSkillSuggestionsError(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          'Could not load AI skills. Ensure the server has GEMINI_API_KEY set.'
+      );
+    } finally {
+      setSkillSuggestionsLoading(false);
+    }
   };
 
   const handleRemoveLocation = (city) => {
@@ -405,14 +465,68 @@ function RequirementForm() {
             <div className="my-6 border-t border-[#EEF2F7]" />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <TagInput
-                label="Skills"
-                required
-                name="skills"
-                value={formData.skills}
-                onValueChange={handleStringField}
-                placeholder="Add skills"
-              />
+              <div>
+                <TagInput
+                  label="Skills"
+                  required
+                  name="skills"
+                  value={formData.skills}
+                  onValueChange={handleStringField}
+                  placeholder="Type to add, or choose from AI below"
+                />
+                <div className="mt-3 rounded-xl border border-[#E0E7FF] bg-gradient-to-b from-[#FAFBFF] to-[#F4F6FF] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[12px] font-semibold text-[#312E81]">AI-recommended skills</span>
+                    <button
+                      type="button"
+                      onClick={fetchSkillSuggestions}
+                      disabled={skillSuggestionsLoading || !formData.jobTitle.trim()}
+                      className={`rounded-lg px-3 py-1.5 text-[12px] font-semibold transition
+                        ${skillSuggestionsLoading || !formData.jobTitle.trim()
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                        }`}
+                    >
+                      {skillSuggestionsLoading ? 'Generating…' : 'Load AI skills'}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-600 mb-2">
+                    Uses job title, description, and any of experience / employment type / work mode you have filled.
+                    Click a chip to add it to Skills. Re-run after filling fields below for stronger suggestions.
+                  </p>
+                  {skillSuggestionsError && (
+                    <p className="text-[12px] text-red-600 mb-2">{skillSuggestionsError}</p>
+                  )}
+                  {skillSuggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {skillSuggestions.map((s) => {
+                        const already = (formData.skills || '')
+                          .split(',')
+                          .map((x) => x.trim().toLowerCase())
+                          .filter(Boolean)
+                          .includes(String(s).trim().toLowerCase());
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => addSuggestedSkill(s)}
+                            disabled={already}
+                            title={already ? 'Already in Skills' : `Add ${s}`}
+                            className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition
+                              ${already
+                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-default'
+                                : 'border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 cursor-pointer shadow-sm'
+                              }`}
+                          >
+                            {already ? '✓ ' : '+ '}
+                            {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
               <TagInput
                 label="Preferred Skills"
                 optional

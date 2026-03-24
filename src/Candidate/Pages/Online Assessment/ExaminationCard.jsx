@@ -71,7 +71,7 @@ function ExaminationCard({ job, handleGiveTest }) {
       </div>
 
       {/* Skills */}
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <p className="text-xs text-gray-600 mb-2">Skills</p>
 
         <div className="flex flex-wrap gap-2">
@@ -96,7 +96,7 @@ function ExaminationCard({ job, handleGiveTest }) {
             <span className="text-xs text-gray-400">No skills listed</span>
           )}
         </div>
-      </div>
+      </div> */}
 
       {/* Time Section */}
       <div className="flex justify-between items-center bg-gray-100 p-3 rounded-xl mt-auto">
