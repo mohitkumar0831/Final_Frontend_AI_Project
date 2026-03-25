@@ -41,6 +41,7 @@ export default function CandidateLogin() {
             );
 
             const cleanCandidate = {
+                _id: data.candidate._id,
                 id: data.candidate._id,
                 name: data.candidate.name,
                 email: data.candidate.email,

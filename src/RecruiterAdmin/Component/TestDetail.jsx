@@ -301,6 +301,19 @@ export default function TestDetail({ formData, onUpdate, onNext, onCancel, loadi
 
     const startM = parseTime12ToMinutes(selectedTime);
     const endM = parseTime12ToMinutes(selectedEndTime);
+
+      const now = new Date();
+  const today = now.toLocaleDateString('en-CA');
+
+  // ✅ ADD THIS BLOCK HERE
+  if (formData.startDate === today) {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    if (startM < currentMinutes) {
+      setTimeModalError("Start time cannot be in the past.");
+      return;
+    }
+  }
     if (startM == null || endM == null) {
       setTimeModalError('Please choose valid start and end times.');
       return;
@@ -331,6 +344,17 @@ export default function TestDetail({ formData, onUpdate, onNext, onCancel, loadi
     });
     setShowTimeModal(false);
   };
+
+  const getMinTime = () => {
+  if (!formData.startDate) return null;
+
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  if (formData.startDate !== today) return null;
+
+  const now = new Date();
+  return now.toTimeString().slice(0, 5); // "HH:MM"
+};
+
 
   const getScheduleDurationLabel = useCallback(() => {
     if (!selectedTime || !selectedEndTime) return null;
@@ -672,6 +696,7 @@ export default function TestDetail({ formData, onUpdate, onNext, onCancel, loadi
                   <input
                     type="time"
                     step={300}
+                    min={getMinTime()}  
                     value={time12ToInput24(selectedTime)}
                     onChange={(e) => setSelectedTime(input24ToTime12(e.target.value))}
                     className="w-full cursor-pointer rounded-lg border-0 bg-transparent text-2xl font-semibold tabular-nums text-gray-900 outline-none [color-scheme:light]"

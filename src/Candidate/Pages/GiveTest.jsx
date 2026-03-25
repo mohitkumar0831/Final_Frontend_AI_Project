@@ -2236,7 +2236,7 @@ const GiveTest = ({ jdId }) => {
 
       {/* Audio Interview Overlay (keeps the recorder mounted so recording does NOT restart) */}
       {showAudioInterview && (
-        <div className="fixed inset-0 z-[9999] bg-white overflow-auto">
+        <div className="fixed inset-0 z-[9999] h-dvh max-h-dvh overflow-hidden bg-[#eef0f4]">
           <AudioInterview
             questions={currentSection?.questions || []}
             candidateId={finalCandidateId}

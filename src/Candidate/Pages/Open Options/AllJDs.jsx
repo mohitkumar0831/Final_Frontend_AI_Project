@@ -20,6 +20,9 @@ const AllJDs = () => {
     const [filterCompany, setFilterCompany] = useState("");
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     const filterRef = useRef(null);
+    const [recommendedJobs, setRecommendedJobs] = useState([]);
+    const [recLoading, setRecLoading] = useState(true);
+    const [recMessage, setRecMessage] = useState(null);
 
     const uniqueLocations = [...new Set(jdData.flatMap(jd => {
         const loc = jd.offerId?.location || jd.location;
@@ -38,6 +41,53 @@ const AllJDs = () => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const fetchRecommendations = async () => {
+            try {
+                setRecLoading(true);
+                const token = localStorage.getItem("candidateToken");
+                if (!token) {
+                    if (!cancelled) {
+                        setRecommendedJobs([]);
+                        setRecMessage(null);
+                    }
+                    return;
+                }
+                // Two-segment path avoids accidental match with GET /:id + HR protect (401 on candidate JWT)
+                const res = await axios.get(`${baseUrl}/candidate/me/job-recommendations`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (cancelled) return;
+                if (res.data?.success && Array.isArray(res.data.recommendedJobs)) {
+                    setRecommendedJobs(res.data.recommendedJobs);
+                    setRecMessage(
+                        res.data.recommendedJobs.length === 0 && res.data.message
+                            ? res.data.message
+                            : null
+                    );
+                } else {
+                    setRecommendedJobs([]);
+                    setRecMessage(null);
+                }
+            } catch (e) {
+                console.error("Error fetching job recommendations:", e);
+                if (!cancelled) {
+                    setRecommendedJobs([]);
+                    setRecMessage(null);
+                }
+            } finally {
+                if (!cancelled) setRecLoading(false);
+            }
+        };
+        fetchRecommendations();
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     useEffect(() => {
@@ -111,8 +161,13 @@ const AllJDs = () => {
         fetchJDs();
     }, [appliedJdIds]);
 
+    const recommendedIds = new Set(
+        recommendedJobs.map((r) => r.mappedJob?._id).filter(Boolean)
+    );
+    const jdDataForListing = jdData.filter((jd) => !recommendedIds.has(jd._id));
+
     const itemsPerPage = 6;
-    const totalPages = Math.ceil(jdData.length / itemsPerPage);
+    const totalPages = Math.ceil(jdDataForListing.length / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
@@ -121,6 +176,12 @@ const AllJDs = () => {
             setCurrentPage(page);
         }
     };
+
+    useEffect(() => {
+        if (totalPages > 0 && currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
 
     const handleApplyClick = (candidate) => {
         setSelectedJob(candidate);
@@ -145,7 +206,7 @@ const AllJDs = () => {
         );
     }
 
-    const filteredCandidates = jdData.filter(jd => {
+    const filteredCandidates = jdDataForListing.filter(jd => {
         const searchLower = searchTerm.toLowerCase();
         const locationStr = Array.isArray(jd.offerId?.location) ? jd.offerId.location.join(' ') : (jd.offerId?.location || '');
         const matchesSearch = jd.title.toLowerCase().includes(searchLower) ||
@@ -179,6 +240,46 @@ const AllJDs = () => {
             />
 
             <main className="max-w-7xl mx-auto mt-8">
+                <section className="mb-12" aria-labelledby="recommended-jobs-heading">
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
+                        <div>
+                            <h2 id="recommended-jobs-heading" className="text-xl font-bold text-gray-900 tracking-tight">
+                                Recommended jobs
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-0.5">
+                                Matched from your resume, skills, experience, and job descriptions
+                            </p>
+                        </div>
+                    </div>
+                    {recLoading ? (
+                        <div className="rounded-2xl border border-indigo-100 bg-white/80 px-5 py-10 text-center text-gray-500 text-sm">
+                            Analyzing your profile and open roles…
+                        </div>
+                    ) : recommendedJobs.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-5 py-8 text-sm text-gray-600 space-y-2">
+                            <p className="font-medium text-gray-800">No recommendations to show yet</p>
+                            <p>
+                                {recMessage ||
+                                    "Either there are no open roles you haven’t applied to (with a future due date), or your profile needs a bit more detail. Add skills and a short summary under Profile, or scroll to All available jobs below."}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] gap-5">
+                            {recommendedJobs.map((row) => (
+                                <AllJDsCard
+                                    key={row.jdId}
+                                    candidate={row.mappedJob}
+                                    handleApplyClick={handleApplyClick}
+                                    // matchPercent={row.matchPercentage}
+                                    // matchReason={row.reason}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                <h2 className="text-lg font-bold text-gray-900 mb-4">All available jobs</h2>
+
                 {currentCandidates.length === 0 ? (
                     <div className="text-center text-gray-500 py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                         No job descriptions found matching your criteria.
@@ -195,7 +296,7 @@ const AllJDs = () => {
                     </div>
                 )}
 
-                {jdData.length > 0 && (
+                {jdDataForListing.length > 0 && (
                     <div className="mt-12 pb-12">
                         <Pagination
                             currentPage={currentPage}

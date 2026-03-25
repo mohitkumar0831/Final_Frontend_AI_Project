@@ -8,7 +8,10 @@ function CandidateProfile() {
         name: '',
         email: '',
         phone: '',
-        resume: ''
+        resume: '',
+        skills: '',
+        yearsOfExperience: '',
+        professionalSummary: '',
     });
     const [originalData, setOriginalData] = useState({});
     const [resumeFile, setResumeFile] = useState(null);
@@ -31,7 +34,10 @@ function CandidateProfile() {
                     name: candidate.name || '',
                     email: candidate.email || '',
                     phone: candidate.phone || '',
-                    resume: candidate.resume || ''
+                    resume: candidate.resume || '',
+                    skills: Array.isArray(candidate.skills) ? candidate.skills.join(', ') : '',
+                    yearsOfExperience: candidate.yearsOfExperience != null ? String(candidate.yearsOfExperience) : '',
+                    professionalSummary: candidate.professionalSummary || '',
                 };
                 setFormData(profileData);
                 setOriginalData(profileData);
@@ -65,6 +71,9 @@ function CandidateProfile() {
             const token = localStorage.getItem("candidateToken");
             const formDataToSend = new FormData();
             formDataToSend.append("phone", formData.phone);
+            formDataToSend.append("skills", formData.skills || '');
+            formDataToSend.append("yearsOfExperience", formData.yearsOfExperience || '');
+            formDataToSend.append("professionalSummary", formData.professionalSummary || '');
             if (resumeFile) formDataToSend.append("resume", resumeFile);
             
             const res = await axios.put(`${baseUrl}/candidate/profile/me`, formDataToSend, {
@@ -74,10 +83,14 @@ function CandidateProfile() {
                 },
             });
             
+            const c = res.data.candidate;
             const updatedData = {
                 ...formData,
-                phone: res.data.candidate.phone || '',
-                resume: res.data.candidate.resume || ''
+                phone: c.phone || '',
+                resume: c.resume || '',
+                skills: Array.isArray(c.skills) ? c.skills.join(', ') : (formData.skills || ''),
+                yearsOfExperience: c.yearsOfExperience != null ? String(c.yearsOfExperience) : '',
+                professionalSummary: c.professionalSummary || '',
             };
             setFormData(updatedData);
             setOriginalData(updatedData);
@@ -172,6 +185,52 @@ function CandidateProfile() {
                         placeholder="Enter your phone number"
                         maxLength={10}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Skills for job matching <span className="text-xs text-purple-500">(comma-separated)</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="skills"
+                        value={formData.skills}
+                        onChange={handleInputChange}
+                        placeholder="e.g. React, Node.js, MongoDB, AWS"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Used to match you with jobs by requirements and descriptions.</p>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Years of experience <span className="text-xs text-purple-500">(optional)</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="yearsOfExperience"
+                        value={formData.yearsOfExperience}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 3"
+                        min={0}
+                        max={60}
+                        step={0.5}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Professional summary <span className="text-xs text-purple-500">(from your resume)</span>
+                    </label>
+                    <textarea
+                        name="professionalSummary"
+                        value={formData.professionalSummary}
+                        onChange={handleInputChange}
+                        rows={4}
+                        placeholder="Paste a short summary or key phrases from your resume — we match these to job descriptions."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y min-h-[100px]"
                     />
                 </div>
 

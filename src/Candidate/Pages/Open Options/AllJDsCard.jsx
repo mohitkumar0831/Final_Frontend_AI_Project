@@ -1,7 +1,7 @@
 import { Calendar, X, MapPin, Briefcase, Clock } from "lucide-react";
 import { useState } from "react";
 
-function AllJDsCard({ candidate, handleApplyClick }) {
+function AllJDsCard({ candidate, handleApplyClick, matchPercent = null, matchReason = null }) {
     const [showSkillsPopup, setShowSkillsPopup] = useState(false);
     const [showAllLocations, setShowAllLocations] = useState(false);
 
@@ -50,8 +50,20 @@ function AllJDsCard({ candidate, handleApplyClick }) {
     return (
         <>
             <div className="bg-white rounded-[20px] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-2 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all relative flex flex-col justify-between">
-                <div className="bg-[#FFF0FD] absolute top-0 right-3 text-fuchsia-600 text-[10px] font-semibold px-3 rounded-full uppercase tracking-wider z-10">
-                    {candidate.appliedCandidates?.length || 0}+ Applicants
+                <div className="absolute top-0 right-3 flex flex-col items-end gap-1 z-10">
+                    {typeof matchPercent === "number" && (
+                        <div className="bg-gradient-to-r from-violet-600 to-indigo-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">
+                            {Math.round(matchPercent)}% match
+                        </div>
+                    )}
+                    {matchReason && (
+                        <p className="max-w-[200px] text-right text-[9px] text-slate-600 leading-snug line-clamp-2" title={matchReason}>
+                            {matchReason}
+                        </p>
+                    )}
+                    <div className="bg-[#FFF0FD] text-fuchsia-600 text-[10px] font-semibold px-3 rounded-full uppercase tracking-wider">
+                        {candidate.appliedCandidates?.length || 0}+ Applicants
+                    </div>
                 </div>
 
                 <div>
