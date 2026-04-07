@@ -7,7 +7,7 @@ const faqs = [
   },
   { 
     q: "Is there a free trial?", 
-    a: "Yes! We offer a 14-day free trial with full access to all features." 
+    a: "Yes! We offer a 7-days free trial with full access to all features." 
   },
   { 
     q: "What integrations do you support?", 

@@ -18,18 +18,18 @@ function QuestionCreated() {
                     </h1>
 
                     <div className="space-y-3 flex flex-col justify-center items-center">
-                        <button className="w-[300px] bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-full transition-colors flex items-center justify-center gap-2">
+                        {/* <button className="w-[300px] bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-full transition-colors flex items-center justify-center gap-2">
                             <Share2 className="w-4 h-4" />
                             Share Test
                         </button>
 
                         <button className="w-[300px] bg-gray-700 hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-full transition-colors">
                             Take Test (Preview)
-                        </button>
+                        </button> */}
 
                         <button
                             onClick={() => navigate('/RecruiterAdmin-Dashboard/Assessment')}
-                            className="w-[200px] bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-full border border-gray-300 transition-colors"
+                            className="w-[300px] bg-gray-700 hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-full transition-colors"
                         >
                             View Test
                         </button>
